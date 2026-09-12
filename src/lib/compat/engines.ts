@@ -1,4 +1,4 @@
-import type { EngineId, QuantFormat } from "./types";
+import type { EngineId, HardwareKind, QuantFormat } from "./types";
 
 /**
  * vLLM/SGLang's documented default for `gpu_memory_utilization`, used when a
@@ -20,10 +20,18 @@ export interface EngineProfile {
    * instead of as literals inside the math.
    */
   overhead: { baseBytes: number; perContextBytes: number };
+  /**
+   * Hardware this engine has a backend for. vLLM, TGI and SGLang are CUDA/ROCm
+   * server runtimes with no Metal path, so "it fits in memory" is not the only
+   * question a Mac user needs answered.
+   */
+  runsOn: HardwareKind[];
 }
 
 const GGUF_OVERHEAD = { baseBytes: 450_000_000, perContextBytes: 18_000 };
 const SERVER_OVERHEAD = { baseBytes: 1_200_000_000, perContextBytes: 24_000 };
+const ANY_HARDWARE: HardwareKind[] = ["discrete-gpu", "apple-silicon", "cpu-only"];
+const DISCRETE_GPU_ONLY: HardwareKind[] = ["discrete-gpu"];
 
 export const ENGINES: Readonly<Record<EngineId, EngineProfile>> = {
   ollama: {
@@ -33,6 +41,7 @@ export const ENGINES: Readonly<Record<EngineId, EngineProfile>> = {
     supportsCpuOffload: true,
     preReservesKvPool: false,
     overhead: GGUF_OVERHEAD,
+    runsOn: ANY_HARDWARE,
   },
   llamacpp: {
     id: "llamacpp",
@@ -41,6 +50,7 @@ export const ENGINES: Readonly<Record<EngineId, EngineProfile>> = {
     supportsCpuOffload: true,
     preReservesKvPool: false,
     overhead: GGUF_OVERHEAD,
+    runsOn: ANY_HARDWARE,
   },
   koboldcpp: {
     id: "koboldcpp",
@@ -49,6 +59,7 @@ export const ENGINES: Readonly<Record<EngineId, EngineProfile>> = {
     supportsCpuOffload: true,
     preReservesKvPool: false,
     overhead: GGUF_OVERHEAD,
+    runsOn: ANY_HARDWARE,
   },
   vllm: {
     id: "vllm",
@@ -58,6 +69,7 @@ export const ENGINES: Readonly<Record<EngineId, EngineProfile>> = {
     preReservesKvPool: true,
     memoryUtilization: DEFAULT_MEMORY_UTILIZATION,
     overhead: SERVER_OVERHEAD,
+    runsOn: DISCRETE_GPU_ONLY,
   },
   tgi: {
     id: "tgi",
@@ -66,6 +78,7 @@ export const ENGINES: Readonly<Record<EngineId, EngineProfile>> = {
     supportsCpuOffload: false,
     preReservesKvPool: false,
     overhead: SERVER_OVERHEAD,
+    runsOn: DISCRETE_GPU_ONLY,
   },
   sglang: {
     id: "sglang",
@@ -75,6 +88,7 @@ export const ENGINES: Readonly<Record<EngineId, EngineProfile>> = {
     preReservesKvPool: true,
     memoryUtilization: DEFAULT_MEMORY_UTILIZATION,
     overhead: SERVER_OVERHEAD,
+    runsOn: DISCRETE_GPU_ONLY,
   },
 };
 

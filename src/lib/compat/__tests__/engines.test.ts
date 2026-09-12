@@ -47,3 +47,19 @@ describe("overheadBytes", () => {
     expect(overheadBytes(e, 16_384)).toBeGreaterThan(overheadBytes(e, 8192));
   });
 });
+
+describe("runsOn", () => {
+  it("lets the llama.cpp family run anywhere", () => {
+    for (const id of ["ollama", "llamacpp", "koboldcpp"] as const) {
+      expect(getEngine(id).runsOn).toEqual(
+        expect.arrayContaining(["discrete-gpu", "apple-silicon", "cpu-only"]),
+      );
+    }
+  });
+
+  it("restricts the server engines to discrete GPUs", () => {
+    for (const id of ["vllm", "tgi", "sglang"] as const) {
+      expect(getEngine(id).runsOn).toEqual(["discrete-gpu"]);
+    }
+  });
+});

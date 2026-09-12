@@ -161,3 +161,28 @@ describe("evaluate — Apple Silicon", () => {
     expect(evaluate(llama70b, small, ollama8k).status).toBe("wont-run");
   });
 });
+
+describe("evaluate — engine/hardware compatibility", () => {
+  const m3max: HardwareSpec = { kind: "apple-silicon", vramBytes: 0, ramBytes: 64 * GB };
+
+  it("refuses vLLM on Apple Silicon — there is no Metal backend", () => {
+    const v = evaluate(llama8b, m3max, {
+      ...ollama8k,
+      engine: "vllm",
+      quantId: "AWQ-4bit",
+    });
+    expect(v.status).toBe("wont-run");
+    expect(v.limitingFactor).toBe("engine");
+    expect(v.notes[0]).toMatch(/Apple Silicon|does not run/i);
+  });
+
+  it("still allows Ollama on Apple Silicon", () => {
+    expect(evaluate(llama8b, m3max, ollama8k).status).toBe("run-on-gpu");
+  });
+
+  it("refuses vLLM on a CPU-only machine", () => {
+    const cpu: HardwareSpec = { kind: "cpu-only", vramBytes: 0, ramBytes: 32 * GB };
+    const v = evaluate(llama8b, cpu, { ...ollama8k, engine: "vllm", quantId: "AWQ-4bit" });
+    expect(v.limitingFactor).toBe("engine");
+  });
+});

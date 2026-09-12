@@ -4,6 +4,7 @@ import { kvCacheBytes } from "./kvCache";
 import { spillCeiling, usableVram } from "./memory";
 import { weightBytes } from "./quant";
 import type {
+  HardwareKind,
   HardwareSpec,
   LimitingFactor,
   ModelSpec,
@@ -16,6 +17,12 @@ import type {
 function groupDigits(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+const HARDWARE_LABELS: Record<HardwareKind, string> = {
+  "discrete-gpu": "a discrete GPU",
+  "apple-silicon": "Apple Silicon",
+  "cpu-only": "a CPU-only machine",
+};
 
 /**
  * Picks the requested quant, or for "auto" the first one the engine can
@@ -68,6 +75,13 @@ export function evaluate(model: ModelSpec, hw: HardwareSpec, settings: Settings)
   // Guard 2: format. If the engine cannot load any quant this model ships,
   // there is nothing left to size.
   const engine = getEngine(settings.engine);
+
+  // Guard: hardware. A model that fits perfectly is still unrunnable if the
+  // engine has no backend for this machine.
+  if (!engine.runsOn.includes(hw.kind)) {
+    return wontRun("engine", `${engine.label} does not run on ${HARDWARE_LABELS[hw.kind]}.`);
+  }
+
   const quant = pickQuant(model, engine, settings.quantId);
   if (!quant) {
     return wontRun("format", `${engine.label} cannot load any quantisation of this model.`);

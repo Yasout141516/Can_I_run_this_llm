@@ -35,8 +35,10 @@ export interface ModelSpec {
   source: { hfRepo: string; ggufRepo?: string; fetchedAt: string };
 }
 
+export type HardwareKind = "discrete-gpu" | "apple-silicon" | "cpu-only";
+
 export interface HardwareSpec {
-  kind: "discrete-gpu" | "apple-silicon" | "cpu-only";
+  kind: HardwareKind;
   /** For apple-silicon this is ignored; the unified pool is `ramBytes`. */
   vramBytes: number;
   ramBytes: number;
@@ -52,7 +54,7 @@ export interface Settings {
 }
 
 export type VerdictStatus = "run-on-gpu" | "cpu-offloaded" | "wont-run";
-export type LimitingFactor = "vram" | "ram" | "context" | "format";
+export type LimitingFactor = "vram" | "ram" | "context" | "format" | "engine";
 
 export interface Verdict {
   status: VerdictStatus;
