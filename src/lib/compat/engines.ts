@@ -1,5 +1,10 @@
-import { DEFAULT_MEMORY_UTILIZATION } from "./memory";
 import type { EngineId, QuantFormat } from "./types";
+
+/**
+ * vLLM/SGLang's documented default for `gpu_memory_utilization`, used when a
+ * profile below does not override it.
+ */
+export const DEFAULT_MEMORY_UTILIZATION = 0.9;
 
 export interface EngineProfile {
   id: EngineId;

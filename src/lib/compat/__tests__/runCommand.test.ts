@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ENGINES } from "../engines";
 import { evaluate } from "../evaluate";
 import { runCommand } from "../runCommand";
 import { llama8b, llama70b, qwen235bMoe, rtx4070 } from "./fixtures";
@@ -35,5 +36,12 @@ describe("runCommand", () => {
   it("returns null for a model that will not run", () => {
     const v = evaluate(qwen235bMoe, rtx4070, ollama8k);
     expect(runCommand(qwen235bMoe, ollama8k, v)).toBeNull();
+  });
+
+  it("prints the vLLM command's utilisation from the engine profile, not a hardcoded default", () => {
+    const s: Settings = { ...ollama8k, engine: "vllm", quantId: "AWQ-4bit" };
+    const v = evaluate(llama8b, rtx4070, s);
+    const cmd = runCommand(llama8b, s, v);
+    expect(cmd).toContain(`--gpu-memory-utilization ${ENGINES.vllm.memoryUtilization}`);
   });
 });

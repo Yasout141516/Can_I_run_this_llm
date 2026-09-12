@@ -97,6 +97,57 @@ describe("evaluate — guard clauses", () => {
   });
 });
 
+describe("evaluate — vLLM pre-reserved KV pool", () => {
+  const vllmAwq: Settings = {
+    engine: "vllm",
+    contextLength: 8192,
+    kvPrecision: "fp16",
+    quantId: "AWQ-4bit",
+  };
+
+  it("fits an AWQ 8B at 8192 context inside the reserved pool", () => {
+    const v = evaluate(llama8b, rtx4070, vllmAwq);
+    expect(v.status).toBe("run-on-gpu");
+  });
+
+  it("does not fit at 131072 context, because of KV — not weights+overhead", () => {
+    // weights ~4.27e9 + overhead ~4.35e9 = ~8.61e9, under the 10.8e9 pool on
+    // their own. It's kv (17,179,869,184) pushing the sum past the pool that
+    // must be what fails this — the case that a dropped kv term would miss.
+    const v = evaluate(llama8b, rtx4070, { ...vllmAwq, contextLength: 131_072 });
+    expect(v.status).toBe("wont-run");
+    expect(v.limitingFactor).toBe("vram");
+  });
+
+  it("mentions the reserved percentage in the note", () => {
+    const v = evaluate(llama8b, rtx4070, { ...vllmAwq, contextLength: 131_072 });
+    expect(v.notes[0]).toContain("90%");
+  });
+
+  it("never offloads to CPU, even with ample VRAM+RAM", () => {
+    const hugeRam: HardwareSpec = { ...rtx4070, ramBytes: 1_000 * GB };
+    const v = evaluate(llama8b, hugeRam, { ...vllmAwq, contextLength: 131_072 });
+    expect(v.status).not.toBe("cpu-offloaded");
+  });
+});
+
+describe("evaluate — context length guard", () => {
+  it.each([-1_000_000, 0, 8192.5])("rejects a nonsensical context length: %d", (contextLength) => {
+    const v = evaluate(llama8b, rtx4070, { ...ollama8k, contextLength });
+    expect(v.status).toBe("wont-run");
+    expect(v.limitingFactor).toBe("context");
+  });
+});
+
+describe("evaluate — cpu-offloaded notes", () => {
+  it("does not mention VRAM layers on a cpu-only machine", () => {
+    const cpuOnly: HardwareSpec = { kind: "cpu-only", vramBytes: 0, ramBytes: 64 * GB };
+    const v = evaluate(llama8b, cpuOnly, ollama8k);
+    expect(v.status).toBe("cpu-offloaded");
+    expect(v.notes[0]).not.toMatch(/VRAM/);
+  });
+});
+
 describe("evaluate — Apple Silicon", () => {
   const m3max: HardwareSpec = { kind: "apple-silicon", vramBytes: 0, ramBytes: 64 * GB };
 

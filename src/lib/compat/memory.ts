@@ -12,14 +12,6 @@ export const APPLE_WIRED_FRACTION = 0.75;
 export const APPLE_SOFT_CEILING = 0.9;
 
 /**
- * vLLM and SGLang's default `gpu_memory_utilization`. It lives here rather
- * than beside the engine profiles so the sizing math, the profiles and the
- * printed run command can all read one number — runCommand.ts cannot import
- * engines.ts without creating a cycle.
- */
-export const DEFAULT_MEMORY_UTILIZATION = 0.9;
-
-/**
  * Not all system RAM is available — the OS needs headroom. Treating 32 GB as
  * 32 GB is how you promise someone a model that thrashes their machine.
  */

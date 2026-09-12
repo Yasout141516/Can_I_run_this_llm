@@ -1,9 +1,14 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import * as compat from "../index";
 
-const DIR = "src/lib/compat";
+// Resolved relative to this test file rather than vitest's cwd, so the scan
+// works no matter where the runner is invoked from. Non-recursive: fine for
+// the current flat layout, but a future subdirectory under src/lib/compat
+// would go unscanned.
+const DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const sourceFiles = readdirSync(DIR)
   .filter((f) => f.endsWith(".ts"))
@@ -27,7 +32,17 @@ describe("compat module purity", () => {
       expect(text, `${name} uses fetch`).not.toMatch(/\bfetch\s*\(/);
       expect(text, `${name} imports node:fs`).not.toMatch(/node:fs/);
       expect(text, `${name} reads the clock`).not.toMatch(/Date\.now|new Date\(\)/);
-      expect(text, `${name} uses toLocaleString`).not.toMatch(/toLocaleString/);
+      expect(text, `${name} uses locale-dependent formatting`).not.toMatch(
+        /toLocale[A-Za-z]*String|Intl\./,
+      );
+      expect(text, `${name} uses Math.random`).not.toMatch(/Math\.random/);
+      expect(text, `${name} reads performance.now`).not.toMatch(/performance\.now/);
+      expect(text, `${name} imports fs without the node: prefix`).not.toMatch(
+        /from ["']fs["']|require\(["']fs["']\)/,
+      );
+      expect(text, `${name} touches a host global`).not.toMatch(
+        /\bprocess\.|\bwindow\.|\blocalStorage\b/,
+      );
     }
   });
 

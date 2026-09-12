@@ -1,7 +1,7 @@
-import { getEngine, overheadBytes } from "./engines";
+import { DEFAULT_MEMORY_UTILIZATION, getEngine, overheadBytes } from "./engines";
 import type { EngineProfile } from "./engines";
 import { kvCacheBytes } from "./kvCache";
-import { DEFAULT_MEMORY_UTILIZATION, spillCeiling, usableVram } from "./memory";
+import { spillCeiling, usableVram } from "./memory";
 import { weightBytes } from "./quant";
 import type {
   HardwareSpec,
@@ -49,6 +49,13 @@ function wontRun(reason: LimitingFactor, note: string): Verdict {
 }
 
 export function evaluate(model: ModelSpec, hw: HardwareSpec, settings: Settings): Verdict {
+  // Guard 0: context length must be a positive whole number of tokens. A
+  // UI number input can hand us "-1" or "0" or a fraction; those are
+  // nonsensical, not merely "too long", so they are checked first.
+  if (!Number.isInteger(settings.contextLength) || settings.contextLength <= 0) {
+    return wontRun("context", "Context length must be a positive whole number of tokens.");
+  }
+
   // Guard 1: context length. Checked before quant selection — a context that
   // is too long is disqualifying no matter what the model can be squeezed into.
   if (settings.contextLength > model.arch.maxContext) {
@@ -112,14 +119,22 @@ export function evaluate(model: ModelSpec, hw: HardwareSpec, settings: Settings)
       model.arch.numLayers,
       Math.max(0, Math.floor((vram - kv - overhead) / bytesPerLayer)),
     );
+    // The layer split only means something on a machine with VRAM to split
+    // across. A cpu-only box has none, and a machine where nothing fit is no
+    // better described by a "0 of N" split than by saying plainly it all
+    // runs from RAM/CPU.
+    const note =
+      hw.kind === "cpu-only"
+        ? "No GPU detected; this model runs entirely on the CPU."
+        : gpuLayers === 0
+          ? "No layers fit in VRAM; this model runs entirely from system RAM."
+          : `${gpuLayers} of ${model.arch.numLayers} layers fit in VRAM; the rest run from system RAM.`;
     return {
       ...base,
       status: "cpu-offloaded",
       gpuLayers,
       limitingFactor: "vram",
-      notes: [
-        `${gpuLayers} of ${model.arch.numLayers} layers fit in VRAM; the rest run from system RAM.`,
-      ],
+      notes: [note],
     };
   }
 

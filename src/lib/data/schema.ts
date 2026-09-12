@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GGUF_BPW, NON_GGUF_BPW } from "../compat/quant";
 
 export const SCHEMA_VERSION = 1;
 
@@ -15,7 +16,18 @@ export const quantSchema = z
   .refine((q) => q.sizeSource !== "measured" || q.fileName !== undefined, {
     message: "a measured size must name the file it was measured from",
     path: ["fileName"],
-  });
+  })
+  .refine((q) => q.sizeSource !== "measured" || q.sizeBytes > 0, {
+    message: "a measured size must be greater than zero",
+    path: ["sizeBytes"],
+  })
+  .refine(
+    (q) => q.sizeSource !== "estimated" || q.id in GGUF_BPW || q.id in NON_GGUF_BPW,
+    {
+      message: "an estimated quant id must be priceable by the bits-per-weight table",
+      path: ["id"],
+    },
+  );
 
 export const modelSchema = z.object({
   id: z.string().min(1),
@@ -29,7 +41,10 @@ export const modelSchema = z.object({
     maxContext: positive.int(),
   }),
   quants: z.array(quantSchema).min(1),
-  benchmarks: z.record(z.number().nullable()),
+  benchmarks: z.record(
+    z.enum(["mmlu", "mmlu_pro", "gpqa", "humaneval", "math", "ifeval", "swe_bench"]),
+    z.number().nullable(),
+  ),
   categories: z
     .array(z.enum(["chat", "code", "reasoning", "vision", "embedding", "medical", "finance", "legal"]))
     .min(1),

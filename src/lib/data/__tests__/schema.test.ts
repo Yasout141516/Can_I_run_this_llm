@@ -48,4 +48,49 @@ describe("modelsFileSchema", () => {
     const params = { total: -1, active: null };
     expect(modelsFileSchema.safeParse(file([{ ...validModel, params }])).success).toBe(false);
   });
+
+  it("rejects an estimated quant id the bits-per-weight table cannot price", () => {
+    const quants = [{ id: "IQ3_XXS", format: "gguf", sizeBytes: 0, sizeSource: "estimated" }];
+    expect(modelsFileSchema.safeParse(file([{ ...validModel, quants }])).success).toBe(false);
+  });
+
+  it("accepts an estimated quant id the bits-per-weight table knows", () => {
+    const quants = [{ id: "Q4_K_M", format: "gguf", sizeBytes: 0, sizeSource: "estimated" }];
+    expect(modelsFileSchema.safeParse(file([{ ...validModel, quants }])).success).toBe(true);
+  });
+
+  it("still accepts a measured quant with an id the table cannot price", () => {
+    // Measured quants carry a real file size and never consult the table —
+    // the exemption is deliberate.
+    const quants = [
+      {
+        id: "IQ3_XXS",
+        format: "gguf",
+        sizeBytes: 3_000_000_000,
+        sizeSource: "measured",
+        fileName: "x-IQ3_XXS.gguf",
+      },
+    ];
+    expect(modelsFileSchema.safeParse(file([{ ...validModel, quants }])).success).toBe(true);
+  });
+
+  it("rejects a measured quant with sizeBytes: 0", () => {
+    const quants = [{ ...validModel.quants[0], sizeBytes: 0 }];
+    expect(modelsFileSchema.safeParse(file([{ ...validModel, quants }])).success).toBe(false);
+  });
+
+  it("still accepts an estimated quant with sizeBytes: 0 — the established sentinel", () => {
+    const quants = [{ id: "Q4_K_M", format: "gguf", sizeBytes: 0, sizeSource: "estimated" }];
+    expect(modelsFileSchema.safeParse(file([{ ...validModel, quants }])).success).toBe(true);
+  });
+
+  it("rejects an unknown benchmark key", () => {
+    const benchmarks = { mmluPro: 70 };
+    expect(modelsFileSchema.safeParse(file([{ ...validModel, benchmarks }])).success).toBe(false);
+  });
+
+  it("accepts known benchmark keys with null values", () => {
+    const benchmarks = { mmlu: null, gpqa: null, swe_bench: 42.1 };
+    expect(modelsFileSchema.safeParse(file([{ ...validModel, benchmarks }])).success).toBe(true);
+  });
 });
