@@ -14,7 +14,7 @@ import type {
 /** vLLM/SGLang's default `gpu_memory_utilization` when a profile doesn't override it. */
 const DEFAULT_MEMORY_UTILIZATION = 0.9;
 
-/** Locale-independent thousands separators — `toLocaleString` would make evaluate() environment-dependent. */
+/** Locale-independent thousands separators — built-in locale methods would make evaluate() environment-dependent. */
 function groupDigits(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
