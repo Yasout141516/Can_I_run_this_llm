@@ -690,21 +690,19 @@
         <div class="v-body">
           <div class="bar-head">
             <span>Q4_K_M &middot; 8K ctx &middot; fp16 KV</span>
-            <span>44.44 GB of 12.00 GB VRAM</span>
+            <span>45.78 GB of 12.00 GB VRAM</span>
           </div>
-          <div class="bar" role="img" aria-label="Needs 44.44 gigabytes; 12 gigabytes of VRAM holds 18 of 80 layers, the rest spills to system RAM">
-            <span class="seg-w" style="width:22.5%"></span>
-            <span class="seg-k" style="width:3.0%"></span>
-            <span class="seg-o" style="width:1.4%"></span>
-            <span class="seg-r" style="width:73.1%"></span>
+          <div class="bar" role="img" aria-label="Needs 45.78 gigabytes; 12 gigabytes of VRAM holds 16 of 80 layers, the rest spills to system RAM">
+            <span class="seg-w" style="width:19.0%"></span>
+            <span class="seg-r" style="width:81.0%"></span>
           </div>
           <div class="legend">
-            <span><i class="seg-w" style="background:#7c3aed"></i>On GPU 10.06 GB</span>
-            <span class="free"><i></i>Spilled to RAM 34.38 GB</span>
+            <span><i class="seg-w" style="background:#7c3aed"></i>On GPU 8.72 GB</span>
+            <span class="free"><i></i>Spilled to RAM 37.06 GB</span>
           </div>
           <div class="why">
             <b>Why</b>
-            <span>18 of 80 layers fit in VRAM. The rest run from your 64&nbsp;GB of system
+            <span>16 of 80 layers fit in VRAM. The rest run from your 64&nbsp;GB of system
               RAM &mdash; it will work, but expect single-digit tokens per second.</span>
           </div>
         </div>
@@ -722,7 +720,8 @@
         <div class="v-body">
           <div class="why">
             <b>Why</b>
-            <span>Needs about 142&nbsp;GB; you have 76&nbsp;GB of VRAM and usable RAM combined.
+            <span>Needs about 143&nbsp;GB; you have 66&nbsp;GB of VRAM and usable RAM combined
+              (12&nbsp;GB VRAM + 54.4&nbsp;GB of your 64&nbsp;GB RAM, after the OS reserve).
               Only 22B parameters are active per token, but every expert must stay
               resident &mdash; so a mixture-of-experts model costs the memory of its
               <em>total</em> size and the speed of its active size.</span>
@@ -844,17 +843,17 @@
   <section class="sec">
     <div class="sec-head">
       <h2>Run it</h2>
-      <p class="note">The offload verdict and this command share one calculation &mdash; <code style="font-family:var(--f-mono);font-size:12px">18</code> is the layer count from the card above.</p>
+      <p class="note">The offload verdict and this command share one calculation &mdash; <code style="font-family:var(--f-mono);font-size:12px">16</code> is the layer count from the card above.</p>
     </div>
     <div class="runit">
       <div class="runit-head">
         <span class="label">Run this model</span>
-        <button class="copy" id="copyBtn" data-cmd="llama-cli -m Llama-3.3-70B-Instruct-Q4_K_M.gguf -c 8192 --n-gpu-layers 18">Copy</button>
+        <button class="copy" id="copyBtn" data-cmd="llama-cli -m Llama-3.3-70B-Instruct-Q4_K_M.gguf -c 8192 --n-gpu-layers 16">Copy</button>
         <span class="engine">llama.cpp &middot; Llama 3.3 70B</span>
       </div>
-<pre><span class="tok-cmt"># 18 of 80 layers on the RTX 4070, remainder on CPU</span>
+<pre><span class="tok-cmt"># 16 of 80 layers on the RTX 4070, remainder on CPU</span>
 <span class="tok-cmd">llama-cli</span> <span class="tok-flag">-m</span> Llama-3.3-70B-Instruct-Q4_K_M.gguf <span class="tok-flag">\</span>
-          <span class="tok-flag">-c</span> 8192 <span class="tok-flag">--n-gpu-layers</span> 18</pre>
+          <span class="tok-flag">-c</span> 8192 <span class="tok-flag">--n-gpu-layers</span> 16</pre>
     </div>
   </section>
 
