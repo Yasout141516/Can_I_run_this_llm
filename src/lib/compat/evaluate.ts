@@ -63,16 +63,7 @@ export function evaluate(model: ModelSpec, hw: HardwareSpec, settings: Settings)
     return wontRun("context", "Context length must be a positive whole number of tokens.");
   }
 
-  // Guard 1: context length. Checked before quant selection — a context that
-  // is too long is disqualifying no matter what the model can be squeezed into.
-  if (settings.contextLength > model.arch.maxContext) {
-    return wontRun(
-      "context",
-      `This model supports up to ${groupDigits(model.arch.maxContext)} tokens.`,
-    );
-  }
-
-  // Guard 2: format. If the engine cannot load any quant this model ships,
+  // Guard 1: format. If the engine cannot load any quant this model ships,
   // there is nothing left to size.
   const engine = getEngine(settings.engine);
 
@@ -99,6 +90,18 @@ export function evaluate(model: ModelSpec, hw: HardwareSpec, settings: Settings)
     totalBytes: total,
   };
   const base = { breakdown, confidence: quant.sizeSource, quantId: quant.id };
+
+  // Context is checked here rather than earlier so the verdict carries real
+  // numbers. "Your VRAM is fine, your context length is not" is only useful
+  // if the report can show the KV cache that context would cost.
+  if (settings.contextLength > model.arch.maxContext) {
+    return {
+      ...base,
+      status: "wont-run",
+      limitingFactor: "context",
+      notes: [`This model supports up to ${groupDigits(model.arch.maxContext)} tokens.`],
+    };
+  }
 
   const vram = usableVram(hw);
 

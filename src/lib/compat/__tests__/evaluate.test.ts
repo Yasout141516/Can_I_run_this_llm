@@ -186,3 +186,30 @@ describe("evaluate — engine/hardware compatibility", () => {
     expect(v.limitingFactor).toBe("engine");
   });
 });
+
+describe("evaluate — a too-long context still shows its arithmetic", () => {
+  const v = evaluate(llama8b, rtx4070, { ...ollama8k, contextLength: 200_000 });
+
+  it("still refuses, naming the context", () => {
+    expect(v.status).toBe("wont-run");
+    expect(v.limitingFactor).toBe("context");
+  });
+
+  it("reports the weights it would have needed", () => {
+    expect(v.breakdown.weightsBytes).toBe(4_920_734_208);
+    expect(v.quantId).toBe("Q4_K_M");
+  });
+
+  it("reports the KV cache at the REQUESTED context, which is the whole point", () => {
+    // 2 * 32 * 8 * 128 * 200000 * 2
+    expect(v.breakdown.kvCacheBytes).toBe(26_214_400_000);
+    expect(v.breakdown.totalBytes).toBeGreaterThan(v.breakdown.kvCacheBytes);
+  });
+
+  it("leaves the nonsense-context guard returning an empty breakdown", () => {
+    // -1 tokens has no meaningful arithmetic to show.
+    const bad = evaluate(llama8b, rtx4070, { ...ollama8k, contextLength: -1 });
+    expect(bad.breakdown.totalBytes).toBe(0);
+    expect(bad.limitingFactor).toBe("context");
+  });
+});
