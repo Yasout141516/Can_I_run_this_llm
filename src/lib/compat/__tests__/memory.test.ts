@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GB, usableRam, usableVram } from "../memory";
+import { GB, spillCeiling, usableRam, usableVram } from "../memory";
 import type { HardwareSpec } from "../types";
 
 const desktop = (vram: number, ram: number): HardwareSpec => ({
@@ -40,5 +40,22 @@ describe("usableVram", () => {
   it("is zero on a CPU-only machine", () => {
     const cpu: HardwareSpec = { kind: "cpu-only", vramBytes: 0, ramBytes: 16 * GB };
     expect(usableVram(cpu)).toBe(0);
+  });
+});
+
+describe("spillCeiling", () => {
+  it("is VRAM plus usable RAM on a discrete GPU", () => {
+    expect(spillCeiling(desktop(12, 64)) / GB).toBeCloseTo(66.4, 5);
+  });
+
+  it("is a fraction of the single pool on Apple Silicon, not pool + itself", () => {
+    const mac: HardwareSpec = { kind: "apple-silicon", vramBytes: 0, ramBytes: 64 * GB };
+    // 64 * 0.9 = 57.6, NOT 48 (wired) + 64 (ram) — that would count the same bytes twice.
+    expect(spillCeiling(mac) / GB).toBeCloseTo(57.6, 5);
+  });
+
+  it("is usable RAM alone on a CPU-only machine", () => {
+    const cpu: HardwareSpec = { kind: "cpu-only", vramBytes: 0, ramBytes: 16 * GB };
+    expect(spillCeiling(cpu)).toBe(usableRam(cpu));
   });
 });

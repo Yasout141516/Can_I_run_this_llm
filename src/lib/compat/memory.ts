@@ -12,6 +12,14 @@ export const APPLE_WIRED_FRACTION = 0.75;
 export const APPLE_SOFT_CEILING = 0.9;
 
 /**
+ * vLLM and SGLang's default `gpu_memory_utilization`. It lives here rather
+ * than beside the engine profiles so the sizing math, the profiles and the
+ * printed run command can all read one number — runCommand.ts cannot import
+ * engines.ts without creating a cycle.
+ */
+export const DEFAULT_MEMORY_UTILIZATION = 0.9;
+
+/**
  * Not all system RAM is available — the OS needs headroom. Treating 32 GB as
  * 32 GB is how you promise someone a model that thrashes their machine.
  */
@@ -25,4 +33,17 @@ export function usableVram(hw: HardwareSpec): number {
   if (hw.kind === "apple-silicon") return hw.ramBytes * APPLE_WIRED_FRACTION;
   if (hw.kind === "cpu-only") return 0;
   return hw.vramBytes;
+}
+
+/**
+ * The most memory a model may occupy and still run at all. A discrete GPU can
+ * spill past VRAM into whatever system RAM the OS will spare. Apple Silicon
+ * has no boundary to spill across, so its ceiling is a fraction of the single
+ * unified pool — adding usableRam there would count the same physical bytes
+ * twice. Keeping this here means only this module has to know what a hardware
+ * `kind` means.
+ */
+export function spillCeiling(hw: HardwareSpec): number {
+  if (hw.kind === "apple-silicon") return hw.ramBytes * APPLE_SOFT_CEILING;
+  return usableVram(hw) + usableRam(hw);
 }

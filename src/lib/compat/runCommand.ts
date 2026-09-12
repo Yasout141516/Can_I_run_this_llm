@@ -1,3 +1,4 @@
+import { DEFAULT_MEMORY_UTILIZATION } from "./memory";
 import type { EngineId, ModelSpec, Settings, Verdict } from "./types";
 
 function ollamaTag(model: ModelSpec, quantId: string): string {
@@ -22,7 +23,7 @@ const TEMPLATES: Record<EngineId, Template> = {
     ` --contextsize ${s.contextLength} --gpulayers ${v.gpuLayers ?? m.arch.numLayers}`,
   vllm: (m, s) =>
     `vllm serve ${m.source.hfRepo} --max-model-len ${s.contextLength}` +
-    ` --gpu-memory-utilization 0.9`,
+    ` --gpu-memory-utilization ${DEFAULT_MEMORY_UTILIZATION}`,
   tgi: (m, s) =>
     `text-generation-launcher --model-id ${m.source.hfRepo}` +
     ` --max-total-tokens ${s.contextLength}`,

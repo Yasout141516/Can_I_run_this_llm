@@ -9,8 +9,10 @@ export {
   RAM_RESERVE_FLOOR,
   APPLE_WIRED_FRACTION,
   APPLE_SOFT_CEILING,
+  DEFAULT_MEMORY_UTILIZATION,
   usableRam,
   usableVram,
+  spillCeiling,
 } from "./memory";
 export { evaluate, selectQuant } from "./evaluate";
 export { runCommand } from "./runCommand";

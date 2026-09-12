@@ -1,3 +1,4 @@
+import { DEFAULT_MEMORY_UTILIZATION } from "./memory";
 import type { EngineId, QuantFormat } from "./types";
 
 export interface EngineProfile {
@@ -50,7 +51,7 @@ export const ENGINES: Readonly<Record<EngineId, EngineProfile>> = {
     formats: ["awq", "gptq", "fp8", "safetensors"],
     supportsCpuOffload: false,
     preReservesKvPool: true,
-    memoryUtilization: 0.9,
+    memoryUtilization: DEFAULT_MEMORY_UTILIZATION,
     overhead: SERVER_OVERHEAD,
   },
   tgi: {
@@ -67,7 +68,7 @@ export const ENGINES: Readonly<Record<EngineId, EngineProfile>> = {
     formats: ["awq", "gptq", "fp8", "safetensors"],
     supportsCpuOffload: false,
     preReservesKvPool: true,
-    memoryUtilization: 0.9,
+    memoryUtilization: DEFAULT_MEMORY_UTILIZATION,
     overhead: SERVER_OVERHEAD,
   },
 };

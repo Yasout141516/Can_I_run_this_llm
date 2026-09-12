@@ -1,6 +1,7 @@
 import { getEngine, overheadBytes } from "./engines";
+import type { EngineProfile } from "./engines";
 import { kvCacheBytes } from "./kvCache";
-import { APPLE_SOFT_CEILING, usableRam, usableVram } from "./memory";
+import { DEFAULT_MEMORY_UTILIZATION, spillCeiling, usableVram } from "./memory";
 import { weightBytes } from "./quant";
 import type {
   HardwareSpec,
@@ -10,9 +11,6 @@ import type {
   Settings,
   Verdict,
 } from "./types";
-
-/** vLLM/SGLang's default `gpu_memory_utilization` when a profile doesn't override it. */
-const DEFAULT_MEMORY_UTILIZATION = 0.9;
 
 /** Locale-independent thousands separators — built-in locale methods would make evaluate() environment-dependent. */
 function groupDigits(n: number): string {
@@ -24,12 +22,19 @@ function groupDigits(n: number): string {
  * load — data files list quants largest-first, so first means best quality
  * that fits the format.
  */
-export function selectQuant(model: ModelSpec, settings: Settings): QuantOption | null {
-  const engine = getEngine(settings.engine);
+function pickQuant(
+  model: ModelSpec,
+  engine: EngineProfile,
+  quantId: string,
+): QuantOption | null {
   const loadable = model.quants.filter((q) => engine.formats.includes(q.format));
   if (loadable.length === 0) return null;
-  if (settings.quantId === "auto") return loadable[0] ?? null;
-  return loadable.find((q) => q.id === settings.quantId) ?? null;
+  if (quantId === "auto") return loadable[0] ?? null;
+  return loadable.find((q) => q.id === quantId) ?? null;
+}
+
+export function selectQuant(model: ModelSpec, settings: Settings): QuantOption | null {
+  return pickQuant(model, getEngine(settings.engine), settings.quantId);
 }
 
 function wontRun(reason: LimitingFactor, note: string): Verdict {
@@ -55,8 +60,8 @@ export function evaluate(model: ModelSpec, hw: HardwareSpec, settings: Settings)
 
   // Guard 2: format. If the engine cannot load any quant this model ships,
   // there is nothing left to size.
-  const quant = selectQuant(model, settings);
   const engine = getEngine(settings.engine);
+  const quant = pickQuant(model, engine, settings.quantId);
   if (!quant) {
     return wontRun("format", `${engine.label} cannot load any quantisation of this model.`);
   }
@@ -75,36 +80,30 @@ export function evaluate(model: ModelSpec, hw: HardwareSpec, settings: Settings)
   const base = { breakdown, confidence: quant.sizeSource, quantId: quant.id };
 
   const vram = usableVram(hw);
-  const notes: string[] = [];
 
   // vLLM and SGLang pre-reserve a fraction of VRAM up front and carve KV out
   // of that budget. The question isn't "does the sum fit in VRAM" but "do
   // weights fit inside the reserved pool, with room left for KV". These
   // engines never offload — a miss here is wont-run, never cpu-offloaded.
   if (engine.preReservesKvPool) {
-    const pool = vram * (engine.memoryUtilization ?? DEFAULT_MEMORY_UTILIZATION);
-    if (weights + overhead <= pool && kv <= pool - weights - overhead) {
-      return { ...base, status: "run-on-gpu", notes };
+    const utilization = engine.memoryUtilization ?? DEFAULT_MEMORY_UTILIZATION;
+    const pool = vram * utilization;
+    if (weights + overhead + kv <= pool) {
+      return { ...base, status: "run-on-gpu", notes: [] };
     }
     return {
       ...base,
       status: "wont-run",
       limitingFactor: "vram",
       notes: [
-        `${engine.label} reserves ${Math.round((engine.memoryUtilization ?? DEFAULT_MEMORY_UTILIZATION) * 100)}% of VRAM up front and cannot offload to system RAM.`,
+        `${engine.label} reserves ${Math.round(utilization * 100)}% of VRAM up front and cannot offload to system RAM.`,
       ],
     };
   }
 
-  if (total <= vram) return { ...base, status: "run-on-gpu", notes };
+  if (total <= vram) return { ...base, status: "run-on-gpu", notes: [] };
 
-  // Apple Silicon has no VRAM/RAM boundary to spill across — usableRam is 0
-  // there. Its ceiling is a fraction of the single unified pool, not
-  // usableVram + usableRam, which would double-count the same physical bytes.
-  const spillCeiling =
-    hw.kind === "apple-silicon" ? hw.ramBytes * APPLE_SOFT_CEILING : vram + usableRam(hw);
-
-  if (engine.supportsCpuOffload && total <= spillCeiling) {
+  if (engine.supportsCpuOffload && total <= spillCeiling(hw)) {
     // Divides weights evenly across layers, ignoring embeddings and the
     // output head (not per-layer tensors). A deliberate approximation: close
     // enough for a layer count.

@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { GB } from "../memory";
 import { bitsPerWeight, weightBytes } from "../quant";
 import type { ModelSpec, QuantOption } from "../types";
-
-const GB = 1_000_000_000;
 
 const model7b = {
   params: { total: 7_000_000_000, active: null },
