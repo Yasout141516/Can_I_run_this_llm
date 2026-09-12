@@ -8,14 +8,17 @@ export function Segmented<T extends string>({
   options,
   value,
   onChange,
+  describedBy,
 }: {
   label: string;
   options: SegmentedOption<T>[];
   value: T;
   onChange: (next: T) => void;
+  /** Id of a separate element carrying this control's help text (see Field's `helpId`). */
+  describedBy?: string;
 }) {
   return (
-    <div className="seg" role="group" aria-label={label}>
+    <div className="seg" role="group" aria-label={label} aria-describedby={describedBy}>
       {options.map((o) => (
         <button
           key={o.value}

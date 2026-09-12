@@ -53,10 +53,49 @@ describe("ModelTable", () => {
   it("renders one row per model with a scrollable container", () => {
     render(
       <MemoryRouter>
-        <ModelTable rows={rows} vramBytes={12 * GB} />
+        <ModelTable rows={rows} vramBytes={12 * GB} filtered={false} />
       </MemoryRouter>,
     );
     expect(screen.getAllByRole("row")).toHaveLength(rows.length + 1); // + header
     expect(screen.getByTestId("table-scroll")).toHaveStyle({ overflowX: "auto" });
+  });
+
+  it("names why a won't-run row won't run", () => {
+    render(
+      <MemoryRouter>
+        <ModelTable rows={rows} vramBytes={12 * GB} filtered={false} />
+      </MemoryRouter>,
+    );
+    const wontRun = rows.find((r) => r.verdict.status === "wont-run");
+    expect(wontRun!.verdict.notes[0]).toBeTruthy();
+    expect(screen.getByText(wontRun!.verdict.notes[0]!)).toBeInTheDocument();
+  });
+
+  // The table used to drop straight to a bare header row with none of the
+  // explanation ModelList gives for the same two dead ends — switching view
+  // must not silently lose the message.
+  it("shows the same 'no matches' message as the card view when filters exclude everything", () => {
+    render(
+      <MemoryRouter>
+        <ModelTable rows={[]} vramBytes={12 * GB} filtered />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("No models match these filters.")).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("shows the same 'nothing fits this machine' message, unfiltered, when every model won't run", () => {
+    const tiny: HardwareSpec = { kind: "discrete-gpu", vramBytes: 2 * GB, ramBytes: 4 * GB };
+    render(
+      <MemoryRouter>
+        <ModelTable
+          rows={scoreModels(loadModels(), tiny, settings)}
+          vramBytes={2 * GB}
+          filtered={false}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText(/nothing here fits this machine/i)).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 });

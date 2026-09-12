@@ -204,6 +204,20 @@ body {
 }
 .help:hover { background: var(--accent-c); }
 
+/* Screen-reader-only text: kept in the accessible tree (used as an
+   aria-describedby target) without changing the visual layout. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .badge.tight { background: var(--offload); color: var(--ink); border-style: solid; }
 .empty { background: var(--card); color: var(--ink); border: var(--bw) dashed var(--ink-soft); border-radius: var(--r); padding: 22px; margin: 0; }
 

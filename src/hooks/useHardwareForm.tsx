@@ -33,12 +33,19 @@ export function useHardwareForm() {
   }, []);
 
   const applyGpu = useCallback((gpu: GpuEntry) => {
-    setHwState((prev) => ({
-      ...prev,
-      kind: gpu.vendor === "apple" ? "apple-silicon" : "discrete-gpu",
-      vramBytes: gpu.vramBytes,
-      memBandwidthGBs: gpu.memBandwidthGBs,
-    }));
+    setHwState((prev) => {
+      const kind = gpu.vendor === "apple" ? "apple-silicon" : "discrete-gpu";
+      return {
+        ...prev,
+        kind,
+        vramBytes: gpu.vramBytes,
+        memBandwidthGBs: gpu.memBandwidthGBs,
+        // A discrete card carrying over "unified" from a previous MacBook
+        // preset would be a stale, physically nonsensical value — ramType
+        // only means something on the apple-silicon path that sets it.
+        ramType: kind === "apple-silicon" ? prev.ramType : undefined,
+      };
+    });
   }, []);
 
   const applyLaptop = useCallback((laptop: LaptopEntry) => {

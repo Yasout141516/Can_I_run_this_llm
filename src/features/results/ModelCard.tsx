@@ -32,8 +32,8 @@ export function ModelCard({ row, vramBytes }: { row: ScoredModel; vramBytes: num
       <div className="v-body">
         <div className="bar-head">
           <span>
-            <b>{model.source.hfRepo.split("/")[0]}</b> · {verdict.quantId ?? "—"} ·{" "}
-            {formatTokens(model.arch.maxContext)} ctx
+            <b>{model.source.hfRepo.split("/")[0]}</b> · {verdict.quantId ?? "—"} · up to{" "}
+            {formatTokens(model.arch.maxContext)} tokens
           </span>
           <span>
             <b>{formatGB(verdict.breakdown.totalBytes)}</b>

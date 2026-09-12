@@ -1,5 +1,5 @@
 import { loadGpus, loadLaptops, type GpuEntry, type LaptopEntry } from "../../lib/data/load";
-import { Field } from "../../components/ui/Field";
+import { Field, helpId } from "../../components/ui/Field";
 
 export function DeviceLookup({
   onPickGpu,
@@ -23,6 +23,7 @@ export function DeviceLookup({
           id="gpu-lookup"
           className="select"
           defaultValue=""
+          aria-describedby={helpId("gpu-lookup")}
           onChange={(e) => {
             const gpu = gpus.find((g) => g.id === e.target.value);
             if (gpu) onPickGpu(gpu);
@@ -47,6 +48,7 @@ export function DeviceLookup({
           id="laptop-lookup"
           className="select"
           defaultValue=""
+          aria-describedby={helpId("laptop-lookup")}
           onChange={(e) => {
             const laptop = laptops.find((l) => l.id === e.target.value);
             if (laptop) onPickLaptop(laptop);

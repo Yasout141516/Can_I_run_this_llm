@@ -17,8 +17,15 @@ const settings: Settings = {
 const rows = () => scoreModels(loadModels(), hw, settings);
 
 describe("scoreModels", () => {
-  it("scores every model exactly once", () => {
-    expect(rows()).toHaveLength(loadModels().length);
+  it("scores every model in the input, in order, without dropping or reordering any", () => {
+    // rows() is `models.map(...)`, so `toHaveLength(models.length)` alone
+    // would pass even if scoring were a no-op — it's true by construction of
+    // .map. Check the actual per-index correspondence instead, plus that
+    // scoring really happened (different models land different verdicts).
+    const models = loadModels();
+    const scored = rows();
+    expect(scored.map((r) => r.model)).toEqual(models);
+    expect(new Set(scored.map((r) => r.verdict.status)).size).toBeGreaterThan(1);
   });
 
   it("reproduces the engine's verdicts on the reference machine", () => {
@@ -35,6 +42,19 @@ describe("StatTiles", () => {
     expect(within(screen.getByTestId("tile-run-on-gpu")).getByText("1")).toBeInTheDocument();
     expect(within(screen.getByTestId("tile-cpu-offloaded")).getByText("1")).toBeInTheDocument();
     expect(within(screen.getByTestId("tile-wont-run")).getByText("1")).toBeInTheDocument();
+  });
+
+  it("maps each status to its own tile, not just to some tile with the right count", () => {
+    // One model per bucket (the test above) can't tell a correct
+    // status→tile mapping from a swapped one — any permutation of three
+    // distinct 1s still reads "1, 1, 1". Score against a roomier machine
+    // where the buckets land 2/1/0, so a swap changes what a specific tile
+    // reads and the assertion actually distinguishes the mapping.
+    const roomy: HardwareSpec = { kind: "discrete-gpu", vramBytes: 48 * GB, ramBytes: 256 * GB };
+    render(<StatTiles rows={scoreModels(loadModels(), roomy, settings)} />);
+    expect(within(screen.getByTestId("tile-run-on-gpu")).getByText("2")).toBeInTheDocument();
+    expect(within(screen.getByTestId("tile-cpu-offloaded")).getByText("1")).toBeInTheDocument();
+    expect(within(screen.getByTestId("tile-wont-run")).getByText("0")).toBeInTheDocument();
   });
 });
 
@@ -68,7 +88,10 @@ describe("ModelList", () => {
     );
     const card = screen.getByTestId("card-meta-llama/Llama-3.1-8B-Instruct");
     expect(within(card).getByText("meta-llama")).toBeInTheDocument();
-    expect(within(card).getByText(/131,072 ctx/)).toBeInTheDocument();
+    // Labelled as a maximum, not the context the totals beside it were
+    // computed at — the model's max context and the user's configured
+    // context are two different numbers that must never look like one.
+    expect(within(card).getByText(/up to 131,072 tokens/)).toBeInTheDocument();
   });
 
   it("tells the user when a machine can run nothing, instead of showing a blank list", () => {

@@ -1,9 +1,25 @@
 import { Link } from "react-router-dom";
+import { Badge } from "../../components/ui/Badge";
 import { VerdictPill } from "../../components/ui/Pill";
 import { formatGB, formatPercent } from "../../lib/ui/format";
-import type { ScoredModel } from "./useVerdicts";
+import { emptyResultsMessage, ResultsEmptyState } from "./ResultsEmptyState";
+import { isTightFit, type ScoredModel } from "./useVerdicts";
 
-export function ModelTable({ rows, vramBytes }: { rows: ScoredModel[]; vramBytes: number }) {
+export function ModelTable({
+  rows,
+  vramBytes,
+  filtered,
+}: {
+  rows: ScoredModel[];
+  vramBytes: number;
+  /** See ModelList — the table must not go blank-with-no-explanation on the
+   * exact same dead ends the card view already handles. */
+  filtered: boolean;
+}) {
+  if (emptyResultsMessage(rows, filtered)) {
+    return <ResultsEmptyState rows={rows} filtered={filtered} />;
+  }
+
   return (
     <div data-testid="table-scroll" style={{ overflowX: "auto" }}>
       <table className="model-table">
@@ -14,7 +30,9 @@ export function ModelTable({ rows, vramBytes }: { rows: ScoredModel[]; vramBytes
             <th scope="col">Quant</th>
             <th scope="col">Needs</th>
             <th scope="col">Of your VRAM</th>
+            <th scope="col">Size source</th>
             <th scope="col">Verdict</th>
+            <th scope="col">Why</th>
           </tr>
         </thead>
         <tbody>
@@ -36,8 +54,17 @@ export function ModelTable({ rows, vramBytes }: { rows: ScoredModel[]; vramBytes
                 <span>{formatPercent(verdict.breakdown.totalBytes, vramBytes)}</span>
               </td>
               <td>
+                <Badge source={verdict.confidence} />
+              </td>
+              <td>
+                {isTightFit(verdict, vramBytes) ? (
+                  <span className="badge tight" title="Fits, but with almost no headroom left">
+                    Tight fit
+                  </span>
+                ) : null}
                 <VerdictPill status={verdict.status} />
               </td>
+              <td>{verdict.notes[0] ?? ""}</td>
             </tr>
           ))}
         </tbody>

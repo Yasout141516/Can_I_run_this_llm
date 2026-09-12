@@ -12,6 +12,8 @@ function Harness() {
       <output data-testid="vram">{form.hw.vramBytes}</output>
       <output data-testid="engine">{form.settings.engine}</output>
       <output data-testid="quant">{form.settings.quantId}</output>
+      <output data-testid="ctx">{form.settings.contextLength}</output>
+      <output data-testid="ram-type">{form.hw.ramType ?? ""}</output>
     </>
   );
 }
@@ -69,5 +71,79 @@ describe("HardwarePanel", () => {
     await userEvent.clear(ram);
     await userEvent.type(ram, "96");
     expect(ram).toHaveValue(96);
+  });
+
+  it("hides the VRAM input and shows the unified-memory figure for Apple Silicon", async () => {
+    render(<Harness />);
+    await userEvent.selectOptions(screen.getByLabelText(/device type/i), "apple-silicon");
+    expect(screen.queryByLabelText(/^vram/i)).not.toBeInTheDocument();
+    // Default RAM is 32 GB; usableVram() reserves 75% of it for the GPU.
+    expect(screen.getByText(/unified memory/i)).toHaveTextContent("24.00 GB");
+  });
+
+  it("hides the VRAM input for a CPU-only machine", async () => {
+    render(<Harness />);
+    await userEvent.selectOptions(screen.getByLabelText(/device type/i), "cpu-only");
+    expect(screen.queryByLabelText(/^vram/i)).not.toBeInTheDocument();
+    // Scoped by test id: the device-type field's own help sentence also
+    // mentions "no GPU", so an unscoped text match finds two hits.
+    expect(screen.getByTestId("no-gpu-note")).toHaveTextContent(/no gpu/i);
+  });
+
+  it("clears a stale ramType when a discrete GPU is applied after a MacBook preset", async () => {
+    render(<Harness />);
+    await userEvent.selectOptions(
+      screen.getByLabelText(/laptop/i),
+      "macbook-pro-16-m3-max-64",
+    );
+    expect(screen.getByTestId("ram-type")).toHaveTextContent("unified");
+    await userEvent.selectOptions(screen.getByLabelText(/graphics card/i), "rtx-4090");
+    expect(screen.getByTestId("ram-type")).toHaveTextContent("");
+  });
+
+  it("ignores a cleared context field instead of coercing it to 0", async () => {
+    render(<Harness />);
+    const ctx = screen.getByLabelText(/context length/i);
+    expect(screen.getByTestId("ctx")).toHaveTextContent("8192");
+    await userEvent.clear(ctx);
+    expect(screen.getByTestId("ctx")).toHaveTextContent("8192");
+  });
+
+  it("ignores malformed context text rather than writing NaN", async () => {
+    render(<Harness />);
+    const ctx = screen.getByLabelText(/context length/i);
+    await userEvent.clear(ctx);
+    // Never a valid numeric prefix at any point while typing, unlike "1e"
+    // (whose leading "1" legitimately commits before the "e" breaks it) —
+    // this exercises the NaN guard specifically, not the blank guard.
+    await userEvent.type(ctx, "abc");
+    expect(screen.getByTestId("ctx")).toHaveTextContent("8192");
+  });
+
+  it("gives each control a description separate from its accessible name", () => {
+    render(<Harness />);
+    expect(
+      screen.getByRole("combobox", {
+        name: "Inference engine",
+        description:
+          "Decides which quantised formats are offered and whether the model can offload into ordinary memory.",
+      }),
+    ).toBeInTheDocument();
+    // A second control, and one from DeviceLookup rather than HardwarePanel
+    // itself, to show the fix is in the shared Field/HelpDot plumbing and not
+    // a one-off patch on a single input.
+    expect(
+      screen.getByRole("combobox", {
+        name: "Quantisation",
+        description:
+          "Smaller formats shrink the weights at some cost to quality. Only formats your engine can load are offered.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", {
+        name: "Graphics card",
+        description: "Pick your card to fill in its video memory. Not listed? Type it in yourself.",
+      }),
+    ).toBeInTheDocument();
   });
 });

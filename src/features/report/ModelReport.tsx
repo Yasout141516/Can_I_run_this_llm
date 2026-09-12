@@ -38,7 +38,7 @@ export function ModelReport() {
     <main className="wrap">
       <Link className="label" to="/">← Back to all models</Link>
 
-      <header className="mast">
+      <header className="mast" data-testid="report-masthead">
         <div>
           <h1>{model.displayName}</h1>
           <p className="v-arch">

@@ -63,7 +63,7 @@ export function CalculatorPage() {
           {view === "cards" ? (
             <ModelList rows={shown} vramBytes={vram} filtered={filtered} />
           ) : (
-            <ModelTable rows={shown} vramBytes={vram} />
+            <ModelTable rows={shown} vramBytes={vram} filtered={filtered} />
           )}
         </section>
       </div>

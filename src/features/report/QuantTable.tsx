@@ -31,19 +31,27 @@ export function QuantTable({
             <th scope="col">Of your VRAM</th>
             <th scope="col">Size source</th>
             <th scope="col">Verdict</th>
+            <th scope="col">Why</th>
           </tr>
         </thead>
         <tbody>
           {model.quants.map((q) => {
             const v = evaluate(model, hw, { ...settings, quantId: q.id });
+            // A "format" verdict means the engine never loaded this quant at
+            // all — evaluate() hands back an all-zero breakdown as a
+            // placeholder, not a real measurement. Printing "0 MB · 0%" would
+            // tell the user the model needs nothing and still won't run,
+            // which is worse than printing nothing.
+            const blockedByFormat = v.limitingFactor === "format";
             return (
               <tr key={q.id}>
                 <th scope="row">{q.id}</th>
                 <td>{q.format}</td>
-                <td>{formatGB(v.breakdown.totalBytes)}</td>
-                <td>{formatPercent(v.breakdown.totalBytes, vramBytes)}</td>
+                <td>{blockedByFormat ? "—" : formatGB(v.breakdown.totalBytes)}</td>
+                <td>{blockedByFormat ? "—" : formatPercent(v.breakdown.totalBytes, vramBytes)}</td>
                 <td><Badge source={q.sizeSource} /></td>
                 <td><VerdictPill status={v.status} /></td>
+                <td>{v.notes[0] ?? ""}</td>
               </tr>
             );
           })}
