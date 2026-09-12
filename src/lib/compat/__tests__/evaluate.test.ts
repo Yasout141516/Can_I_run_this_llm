@@ -71,6 +71,12 @@ describe("evaluate — guard clauses", () => {
     expect(v.limitingFactor).toBe("context");
   });
 
+  it("formats the max-context note with locale-independent grouping", () => {
+    // Must not depend on toLocaleString()/ambient locale — same output everywhere.
+    const v = evaluate(llama8b, rtx4070, { ...ollama8k, contextLength: 200_000 });
+    expect(v.notes[0]).toContain("131,072");
+  });
+
   it("refuses a model with no quant the engine can load", () => {
     const v = evaluate(llama70b, rtx4070, { ...ollama8k, engine: "vllm", quantId: "auto" });
     expect(v.status).toBe("wont-run");

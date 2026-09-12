@@ -11,6 +11,14 @@ import type {
   Verdict,
 } from "./types";
 
+/** vLLM/SGLang's default `gpu_memory_utilization` when a profile doesn't override it. */
+const DEFAULT_MEMORY_UTILIZATION = 0.9;
+
+/** Locale-independent thousands separators — `toLocaleString` would make evaluate() environment-dependent. */
+function groupDigits(n: number): string {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 /**
  * Picks the requested quant, or for "auto" the first one the engine can
  * load — data files list quants largest-first, so first means best quality
@@ -41,7 +49,7 @@ export function evaluate(model: ModelSpec, hw: HardwareSpec, settings: Settings)
   if (settings.contextLength > model.arch.maxContext) {
     return wontRun(
       "context",
-      `This model supports up to ${model.arch.maxContext.toLocaleString()} tokens.`,
+      `This model supports up to ${groupDigits(model.arch.maxContext)} tokens.`,
     );
   }
 
@@ -74,7 +82,7 @@ export function evaluate(model: ModelSpec, hw: HardwareSpec, settings: Settings)
   // weights fit inside the reserved pool, with room left for KV". These
   // engines never offload — a miss here is wont-run, never cpu-offloaded.
   if (engine.preReservesKvPool) {
-    const pool = vram * (engine.memoryUtilization ?? 0.9);
+    const pool = vram * (engine.memoryUtilization ?? DEFAULT_MEMORY_UTILIZATION);
     if (weights + overhead <= pool && kv <= pool - weights - overhead) {
       return { ...base, status: "run-on-gpu", notes };
     }
@@ -83,7 +91,7 @@ export function evaluate(model: ModelSpec, hw: HardwareSpec, settings: Settings)
       status: "wont-run",
       limitingFactor: "vram",
       notes: [
-        `${engine.label} reserves ${Math.round((engine.memoryUtilization ?? 0.9) * 100)}% of VRAM up front and cannot offload to system RAM.`,
+        `${engine.label} reserves ${Math.round((engine.memoryUtilization ?? DEFAULT_MEMORY_UTILIZATION) * 100)}% of VRAM up front and cannot offload to system RAM.`,
       ],
     };
   }
