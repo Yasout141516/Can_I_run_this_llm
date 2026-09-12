@@ -203,3 +203,6 @@ body {
   flex: none;
 }
 .help:hover { background: var(--accent-c); }
+
+.badge.tight { background: var(--offload); color: var(--ink); border-style: solid; }
+.empty { background: var(--card); color: var(--ink); border: var(--bw) dashed var(--ink-soft); border-radius: var(--r); padding: 22px; margin: 0; }
