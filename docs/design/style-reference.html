@@ -1,0 +1,900 @@
+<title>Runcheck Style Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+  :root {
+    /* Ground + surfaces */
+    --ground:      #55547e;
+    --ground-deep: #43426a;
+    --card:        #fcf9ec;
+    --card-sunk:   #f1eddc;
+    --ink:         #141046;
+    --ink-soft:    #55507f;
+
+    /* Accent */
+    --accent-a:    #7c3aed;
+    --accent-b:    #2f6fed;
+    --accent-c:    #2dd4bf;
+    --accent-grad: linear-gradient(103deg, var(--accent-a) 0%, var(--accent-b) 58%, var(--accent-c) 100%);
+
+    /* Semantic status — separate from the accent hue */
+    --run:         #2fb673;
+    --offload:     #f0a429;
+    --wont:        #e25548;
+
+    /* Structure */
+    --bw:          3px;
+    --r:           14px;
+    --r-sm:        9px;
+    --shadow:      6px 6px 0 var(--ink);
+    --shadow-sm:   4px 4px 0 var(--ink);
+
+    --f-display: "Archivo Black", "Arial Black", system-ui, sans-serif;
+    --f-body:    "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --f-mono:    "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  /* Deliberate single-theme design: this indigo world IS the product identity,
+     so every color is painted explicitly rather than inherited from the host. */
+
+  body {
+    background: var(--ground);
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(124,58,237,.20), transparent 42%),
+      radial-gradient(circle at 86% 78%, rgba(45,212,191,.13), transparent 46%);
+    color: var(--card);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 40px 22px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 46px;
+  }
+
+  /* ---------- shared atoms ---------- */
+
+  .label {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+  }
+
+  .panel {
+    background: var(--card);
+    color: var(--ink);
+    border: var(--bw) solid var(--ink);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    padding: 26px 26px 28px;
+  }
+
+  .req { color: var(--accent-a); font-weight: 700; }
+
+  /* help dot — the coach-mark entry point */
+  .help {
+    display: inline-grid;
+    place-items: center;
+    width: 19px; height: 19px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--card);
+    color: var(--ink);
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: help;
+    flex: none;
+  }
+  .help:hover { background: var(--accent-c); }
+
+  /* ---------- masthead ---------- */
+
+  .mast {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px 26px;
+  }
+  .mast h1 {
+    font-family: var(--f-display);
+    font-size: clamp(30px, 5.4vw, 50px);
+    line-height: 1.02;
+    letter-spacing: -.015em;
+    margin: 6px 0 0;
+    text-wrap: balance;
+    color: var(--card);
+    text-shadow: 3px 3px 0 var(--ink);
+  }
+  .mast .eyebrow { color: var(--accent-c); }
+  .mast p {
+    margin: 10px 0 0;
+    max-width: 52ch;
+    color: #ded9f2;
+  }
+  .mast-side {
+    border: var(--bw) solid var(--ink);
+    border-radius: var(--r);
+    background: var(--ground-deep);
+    box-shadow: var(--shadow-sm);
+    padding: 12px 16px;
+    display: grid;
+    gap: 3px;
+  }
+  .mast-side .label { color: var(--accent-c); }
+  .mast-side code { font-family: var(--f-mono); font-size: 12.5px; color: #efecff; }
+
+  /* ---------- section headings ---------- */
+
+  .sec { display: flex; flex-direction: column; gap: 18px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .sec-head h2 {
+    font-family: var(--f-display);
+    font-size: 21px;
+    letter-spacing: -.01em;
+    margin: 0;
+    color: var(--card);
+  }
+  .sec-head .note { color: #cdc7e8; font-size: 13.5px; margin: 0; }
+
+  /* ---------- 1. palette ---------- */
+
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 14px;
+  }
+  .sw {
+    border: var(--bw) solid var(--ink);
+    border-radius: var(--r-sm);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .sw .chip { height: 58px; }
+  .sw .meta {
+    background: var(--card);
+    color: var(--ink);
+    padding: 8px 10px 9px;
+    display: grid;
+    gap: 1px;
+  }
+  .sw .nm { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .sw .hx { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); }
+
+  /* ---------- 2. type ---------- */
+
+  .type-panel { display: grid; gap: 20px; }
+  .type-row {
+    display: grid;
+    grid-template-columns: 116px 1fr;
+    gap: 8px 20px;
+    align-items: baseline;
+  }
+  .type-row > .label { color: var(--ink-soft); padding-top: 6px; }
+  .spec-display { font-family: var(--f-display); font-size: 32px; line-height: 1.08; letter-spacing: -.015em; }
+  .spec-body   { font-family: var(--f-body); font-size: 15px; max-width: 62ch; }
+  .spec-mono   { font-family: var(--f-mono); font-size: 13px; letter-spacing: .13em; text-transform: uppercase; font-weight: 600; }
+  .spec-num    { font-family: var(--f-mono); font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  @media (max-width: 620px) { .type-row { grid-template-columns: 1fr; } }
+
+  /* ---------- 3. stat tiles ---------- */
+
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .tile {
+    background: var(--card);
+    color: var(--ink);
+    border: var(--bw) solid var(--ink);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    padding: 16px 18px 18px;
+    display: grid;
+    gap: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tile::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 9px;
+    background: var(--tone);
+  }
+  .tile .n {
+    font-family: var(--f-mono);
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    padding-left: 6px;
+  }
+  .tile .label { color: var(--ink-soft); padding-left: 6px; }
+  @media (max-width: 620px) { .tiles { grid-template-columns: 1fr; } }
+
+  /* ---------- 4. verdict cards ---------- */
+
+  .verdicts { display: grid; gap: 16px; }
+  .verdict {
+    background: var(--card);
+    color: var(--ink);
+    border: var(--bw) solid var(--ink);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    padding: 0;
+    overflow: hidden;
+  }
+  .v-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 15px 18px;
+    border-bottom: var(--bw) solid var(--ink);
+    background: var(--card-sunk);
+  }
+  .v-name { font-family: var(--f-display); font-size: 17px; letter-spacing: -.01em; }
+  .v-arch { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); letter-spacing: .04em; }
+  .v-spacer { margin-left: auto; }
+
+  /* status pill: icon + word + color, never color alone */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    padding: 4px 12px 4px 9px;
+    background: var(--tone);
+    color: var(--ink);
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .pill .gl { font-size: 12px; line-height: 1; }
+
+  .v-body { padding: 18px; display: grid; gap: 15px; }
+
+  /* memory bar drawn to the VRAM scale */
+  .bar-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .bar {
+    display: flex;
+    height: 30px;
+    border: 2px solid var(--ink);
+    border-radius: var(--r-sm);
+    background: repeating-linear-gradient(45deg, #e7e2ce 0 5px, #ded8c2 5px 10px);
+    overflow: hidden;
+  }
+  .bar > span { display: block; border-right: 2px solid var(--ink); }
+  .bar > span:last-child { border-right: 0; }
+  .seg-w { background: var(--accent-a); }
+  .seg-k { background: var(--accent-b); }
+  .seg-o { background: var(--accent-c); }
+  .seg-r { background: transparent; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .legend i {
+    display: inline-block;
+    width: 11px; height: 11px;
+    border: 2px solid var(--ink);
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: -1px;
+  }
+  .legend .free i { background: #e2ddc8; }
+
+  .why {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: var(--card-sunk);
+    border: 2px dashed var(--ink-soft);
+    border-radius: var(--r-sm);
+    padding: 10px 13px;
+    font-size: 13.5px;
+  }
+  .why b { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; }
+
+  /* provenance badge: measured vs estimated */
+  .badge {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    border: 2px solid var(--ink);
+    border-radius: 5px;
+    padding: 2px 7px;
+    white-space: nowrap;
+  }
+  .badge.measured  { background: var(--accent-c); color: var(--ink); }
+  .badge.estimated { background: transparent; color: var(--ink-soft); border-style: dashed; }
+
+  /* ---------- 5. controls ---------- */
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 22px; }
+  @media (max-width: 720px) { .form-grid { grid-template-columns: 1fr; } }
+  .field { display: grid; gap: 7px; }
+  .field > .lab { display: flex; align-items: center; gap: 8px; color: var(--ink); }
+
+  .input, .select {
+    font-family: var(--f-body);
+    font-size: 15px;
+    color: var(--ink);
+    background: #fff;
+    border: var(--bw) solid var(--ink);
+    border-radius: var(--r-sm);
+    padding: 12px 14px;
+    width: 100%;
+    box-shadow: inset 0 2px 0 rgba(20,16,70,.07);
+  }
+  .input::placeholder { color: #9d98b8; }
+  .input:focus-visible, .select:focus-visible {
+    outline: 3px solid var(--accent-a);
+    outline-offset: 2px;
+  }
+  .select { appearance: none; background-image: none; cursor: pointer; font-family: var(--f-mono); font-size: 13.5px; }
+
+  .field .hint { font-family: var(--f-mono); font-size: 11px; color: var(--ink-soft); letter-spacing: .04em; }
+
+  /* segmented control — KV precision */
+  .seg {
+    display: inline-flex;
+    border: var(--bw) solid var(--ink);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+    background: #fff;
+  }
+  .seg button {
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 11px 16px;
+    background: #fff;
+    color: var(--ink);
+    border: 0;
+    border-right: 2px solid var(--ink);
+    cursor: pointer;
+  }
+  .seg button:last-child { border-right: 0; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+  .seg button:focus-visible { outline: 3px solid var(--accent-a); outline-offset: -3px; }
+
+  /* filter chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 9px; }
+  .chip-btn {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    padding: 7px 13px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .chip-btn[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+  .chip-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+  .chip-btn:focus-visible { outline: 3px solid var(--accent-c); outline-offset: 2px; }
+
+  /* ---------- 6. buttons ---------- */
+
+  .btn-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .btn {
+    font-family: var(--f-display);
+    font-size: 15px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 14px 22px;
+    border: var(--bw) solid var(--ink);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: transform .07s steps(2), box-shadow .07s steps(2);
+  }
+  .btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink); }
+  .btn:focus-visible { outline: 3px solid var(--accent-c); outline-offset: 3px; }
+  .btn-primary { background: var(--accent-grad); color: #fff; text-shadow: 0 1px 0 rgba(20,16,70,.45); }
+  .btn-secondary { background: var(--card); color: var(--ink); }
+  .btn-ghost { background: transparent; color: var(--card); border-color: var(--card); box-shadow: var(--shadow-sm); }
+  .btn[disabled] { opacity: .5; cursor: not-allowed; }
+  @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+
+  /* ---------- 7. coach-mark ---------- */
+
+  .coach-stage {
+    background: var(--ground-deep);
+    border: var(--bw) solid var(--ink);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    padding: 26px 22px 58px;
+    position: relative;
+  }
+  .coach {
+    position: relative;
+    max-width: 380px;
+    background: var(--card);
+    color: var(--ink);
+    border: var(--bw) solid var(--ink);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    padding: 20px 22px 18px;
+  }
+  .coach::after,
+  .coach::before {
+    content: "";
+    position: absolute;
+    left: 42px;
+    width: 0; height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+  }
+  .coach::before { bottom: -21px; border-top: 21px solid var(--ink); }
+  .coach::after  { bottom: -16px; border-top: 21px solid var(--card); }
+
+  .coach h3 { font-family: var(--f-display); font-size: 21px; margin: 0 0 8px; letter-spacing: -.01em; }
+  .coach p  { margin: 0 0 16px; font-size: 14.5px; }
+  .coach code { font-family: var(--f-mono); font-size: 13px; background: var(--card-sunk); border: 1px solid var(--ink-soft); border-radius: 4px; padding: 1px 5px; }
+  .coach-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .coach-foot .label { color: var(--ink-soft); margin-right: auto; }
+  .coach .btn { font-size: 13px; padding: 10px 16px; }
+  .coach-x {
+    position: absolute;
+    top: -13px; right: -13px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: var(--bw) solid var(--card);
+    background: var(--ink);
+    color: var(--card);
+    font-family: var(--f-mono);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .coach-x:focus-visible { outline: 3px solid var(--accent-c); outline-offset: 2px; }
+
+  /* ---------- 8. run-it block ---------- */
+
+  .runit {
+    background: var(--ink);
+    border: var(--bw) solid var(--ink);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .runit-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    background: var(--ground-deep);
+    border-bottom: var(--bw) solid var(--ink);
+  }
+  .runit-head .label { color: var(--accent-c); }
+  .runit-head .engine { font-family: var(--f-mono); font-size: 11.5px; color: #d9d4f0; margin-left: auto; }
+  .runit pre {
+    margin: 0;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: var(--f-mono);
+    font-size: 13px;
+    line-height: 1.75;
+    color: #f2efff;
+  }
+  .runit .tok-cmd { color: var(--accent-c); font-weight: 700; }
+  .runit .tok-flag { color: #ffd479; }
+  .runit .tok-cmt { color: #9b93c9; }
+  .copy {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    background: var(--card);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 5px;
+    padding: 5px 11px;
+    cursor: pointer;
+  }
+  .copy:focus-visible { outline: 3px solid var(--accent-c); outline-offset: 2px; }
+
+  /* ---------- footer ---------- */
+
+  .foot {
+    border-top: var(--bw) solid var(--ink);
+    padding-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    justify-content: space-between;
+    color: #cdc7e8;
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    letter-spacing: .06em;
+  }
+</style>
+
+<div class="wrap">
+
+  <!-- ============ MASTHEAD ============ -->
+  <header class="mast">
+    <div>
+      <div class="label eyebrow">Style reference &middot; v1</div>
+      <h1>Runcheck</h1>
+      <p>The visual system for the LLM hardware compatibility checker. Every
+         number on this page comes from the real calculation &mdash; Llama&nbsp;3.1&nbsp;8B
+         at Q4_K_M, 8K context, fp16 KV cache &mdash; so the style is judged on the
+         content it will actually carry.</p>
+    </div>
+    <div class="mast-side">
+      <div class="label">Reference hardware</div>
+      <code>RTX 4070 &middot; 12 GB VRAM</code>
+      <code>64 GB DDR5 &middot; Ollama</code>
+    </div>
+  </header>
+
+  <!-- ============ PALETTE ============ -->
+  <section class="sec">
+    <div class="sec-head">
+      <h2>Palette</h2>
+      <p class="note">Accent is one gradient. Status colour is separate and never doubles as accent.</p>
+    </div>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#55547e"></div><div class="meta"><span class="nm">Ground</span><span class="hx">#55547E</span></div></div>
+      <div class="sw"><div class="chip" style="background:#fcf9ec"></div><div class="meta"><span class="nm">Card</span><span class="hx">#FCF9EC</span></div></div>
+      <div class="sw"><div class="chip" style="background:#141046"></div><div class="meta"><span class="nm">Ink</span><span class="hx">#141046</span></div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(103deg,#7c3aed,#2f6fed 58%,#2dd4bf)"></div><div class="meta"><span class="nm">Accent</span><span class="hx">#7C3AED&rarr;#2DD4BF</span></div></div>
+      <div class="sw"><div class="chip" style="background:#2fb673"></div><div class="meta"><span class="nm">Run</span><span class="hx">#2FB673</span></div></div>
+      <div class="sw"><div class="chip" style="background:#f0a429"></div><div class="meta"><span class="nm">Offload</span><span class="hx">#F0A429</span></div></div>
+      <div class="sw"><div class="chip" style="background:#e25548"></div><div class="meta"><span class="nm">Won't run</span><span class="hx">#E25548</span></div></div>
+    </div>
+  </section>
+
+  <!-- ============ TYPE ============ -->
+  <section class="sec">
+    <div class="sec-head">
+      <h2>Type</h2>
+      <p class="note">Three roles. Mono carries every label and every number.</p>
+    </div>
+    <div class="panel type-panel">
+      <div class="type-row">
+        <span class="label">Display</span>
+        <div class="spec-display">Archivo Black</div>
+      </div>
+      <div class="type-row">
+        <span class="label">Body</span>
+        <div class="spec-body">IBM Plex Sans, set at 15px with a 1.6 line height. Used for
+          explanatory copy &mdash; the tip text, the reason a model won't run, the note about
+          what an estimated size means. Measured around 62 characters per line.</div>
+      </div>
+      <div class="type-row">
+        <span class="label">Label</span>
+        <div class="spec-mono">KV cache precision &middot; tip 3 of 6</div>
+      </div>
+      <div class="type-row">
+        <span class="label">Data</span>
+        <div class="spec-num">6.59 GB / 12.00 GB</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STAT TILES ============ -->
+  <section class="sec">
+    <div class="sec-head">
+      <h2>Result summary</h2>
+      <p class="note">Counts across all 295 tracked models at the reference hardware above.</p>
+    </div>
+    <div class="tiles">
+      <div class="tile" style="--tone:var(--run)">
+        <span class="n">148</span>
+        <span class="label">Run on GPU</span>
+      </div>
+      <div class="tile" style="--tone:var(--offload)">
+        <span class="n">63</span>
+        <span class="label">CPU offloaded</span>
+      </div>
+      <div class="tile" style="--tone:var(--wont)">
+        <span class="n">84</span>
+        <span class="label">Won't run</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VERDICT CARDS ============ -->
+  <section class="sec">
+    <div class="sec-head">
+      <h2>Verdict cards</h2>
+      <p class="note">Status reads three ways at once &mdash; glyph, word, colour &mdash; so it survives colour-blindness and greyscale.</p>
+    </div>
+
+    <div class="verdicts">
+
+      <!-- RUN -->
+      <article class="verdict">
+        <div class="v-top">
+          <span class="v-name">Llama 3.1 8B Instruct</span>
+          <span class="v-arch">8.03B dense &middot; 32L &middot; 8 KV heads</span>
+          <span class="v-spacer"></span>
+          <span class="badge measured">Measured</span>
+          <span class="pill" style="--tone:var(--run)"><span class="gl">&#9679;</span>Run on GPU</span>
+        </div>
+        <div class="v-body">
+          <div class="bar-head">
+            <span>Q4_K_M &middot; 8K ctx &middot; fp16 KV</span>
+            <span>6.59 GB of 12.00 GB</span>
+          </div>
+          <div class="bar" role="img" aria-label="Weights 4.92 GB, KV cache 1.07 GB, overhead 0.60 GB, of 12 GB VRAM">
+            <span class="seg-w" style="width:41.0%"></span>
+            <span class="seg-k" style="width:8.9%"></span>
+            <span class="seg-o" style="width:5.0%"></span>
+            <span class="seg-r" style="width:45.1%"></span>
+          </div>
+          <div class="legend">
+            <span><i class="seg-w" style="background:#7c3aed"></i>Weights 4.92 GB</span>
+            <span><i class="seg-k" style="background:#2f6fed"></i>KV cache 1.07 GB</span>
+            <span><i class="seg-o" style="background:#2dd4bf"></i>Overhead 0.60 GB</span>
+            <span class="free"><i></i>Free 5.41 GB</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- OFFLOAD -->
+      <article class="verdict">
+        <div class="v-top">
+          <span class="v-name">Llama 3.3 70B Instruct</span>
+          <span class="v-arch">70.6B dense &middot; 80L &middot; 8 KV heads</span>
+          <span class="v-spacer"></span>
+          <span class="badge measured">Measured</span>
+          <span class="pill" style="--tone:var(--offload)"><span class="gl">&#9650;</span>CPU offloaded</span>
+        </div>
+        <div class="v-body">
+          <div class="bar-head">
+            <span>Q4_K_M &middot; 8K ctx &middot; fp16 KV</span>
+            <span>44.44 GB of 12.00 GB VRAM</span>
+          </div>
+          <div class="bar" role="img" aria-label="Needs 44.44 gigabytes; 12 gigabytes of VRAM holds 18 of 80 layers, the rest spills to system RAM">
+            <span class="seg-w" style="width:22.5%"></span>
+            <span class="seg-k" style="width:3.0%"></span>
+            <span class="seg-o" style="width:1.4%"></span>
+            <span class="seg-r" style="width:73.1%"></span>
+          </div>
+          <div class="legend">
+            <span><i class="seg-w" style="background:#7c3aed"></i>On GPU 10.06 GB</span>
+            <span class="free"><i></i>Spilled to RAM 34.38 GB</span>
+          </div>
+          <div class="why">
+            <b>Why</b>
+            <span>18 of 80 layers fit in VRAM. The rest run from your 64&nbsp;GB of system
+              RAM &mdash; it will work, but expect single-digit tokens per second.</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- WON'T RUN -->
+      <article class="verdict">
+        <div class="v-top">
+          <span class="v-name">Qwen3 235B A22B</span>
+          <span class="v-arch">235B total / 22B active &middot; MoE</span>
+          <span class="v-spacer"></span>
+          <span class="badge estimated">Estimated</span>
+          <span class="pill" style="--tone:var(--wont)"><span class="gl">&#10007;</span>Won't run</span>
+        </div>
+        <div class="v-body">
+          <div class="why">
+            <b>Why</b>
+            <span>Needs about 142&nbsp;GB; you have 76&nbsp;GB of VRAM and usable RAM combined.
+              Only 22B parameters are active per token, but every expert must stay
+              resident &mdash; so a mixture-of-experts model costs the memory of its
+              <em>total</em> size and the speed of its active size.</span>
+          </div>
+          <div class="why" style="border-style:solid;border-color:var(--wont)">
+            <b>Estimated</b>
+            <span>No published GGUF for this quantisation yet, so the size comes from
+              parameters &times; bits-per-weight rather than a real file.</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============ CONTROLS ============ -->
+  <section class="sec">
+    <div class="sec-head">
+      <h2>Hardware panel</h2>
+      <p class="note">Every field that needs explaining carries a <span class="help" aria-hidden="true">?</span> that reopens its tip.</p>
+    </div>
+    <div class="panel">
+      <div class="form-grid">
+
+        <div class="field">
+          <span class="lab label">Graphics card <span class="req">*</span> <span class="help" tabindex="0" role="button" aria-label="Help: graphics card">?</span></span>
+          <input class="input" type="text" value="NVIDIA GeForce RTX 4070" aria-label="Graphics card">
+          <span class="hint">Not listed? Enter VRAM manually.</span>
+        </div>
+
+        <div class="field">
+          <span class="lab label">VRAM <span class="req">*</span></span>
+          <input class="input" type="text" value="12 GB" aria-label="VRAM">
+          <span class="hint">Auto-filled &mdash; always editable.</span>
+        </div>
+
+        <div class="field">
+          <span class="lab label">Inference engine <span class="help" tabindex="0" role="button" aria-label="Help: inference engine">?</span></span>
+          <select class="select" aria-label="Inference engine">
+            <option>Ollama</option>
+            <option>llama.cpp</option>
+            <option>KoboldCpp</option>
+            <option>vLLM</option>
+            <option>TGI</option>
+            <option>SGLang</option>
+          </select>
+          <span class="hint">Decides which quantisations are offered.</span>
+        </div>
+
+        <div class="field">
+          <span class="lab label">Context length <span class="help" tabindex="0" role="button" aria-label="Help: context length">?</span></span>
+          <input class="input" type="text" value="8,192 tokens" aria-label="Context length">
+          <span class="hint">Model maximum: 131,072.</span>
+        </div>
+
+        <div class="field">
+          <span class="lab label">KV cache precision <span class="help" tabindex="0" role="button" aria-label="Help: KV cache precision">?</span></span>
+          <div class="seg" role="group" aria-label="KV cache precision">
+            <button type="button" aria-pressed="true">fp16</button>
+            <button type="button" aria-pressed="false">q8</button>
+            <button type="button" aria-pressed="false">q4</button>
+          </div>
+          <span class="hint">fp16 &rarr; 1.07 GB at this context.</span>
+        </div>
+
+        <div class="field">
+          <span class="lab label">Category</span>
+          <div class="chips">
+            <button type="button" class="chip-btn" aria-pressed="true">All</button>
+            <button type="button" class="chip-btn" aria-pressed="false">Code</button>
+            <button type="button" class="chip-btn" aria-pressed="false">Reasoning</button>
+            <button type="button" class="chip-btn" aria-pressed="false">Vision</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BUTTONS ============ -->
+  <section class="sec">
+    <div class="sec-head">
+      <h2>Buttons</h2>
+      <p class="note">Press translates 4px into the shadow. Steps timing, not ease &mdash; it should click, not glide.</p>
+    </div>
+    <div class="panel">
+      <div class="btn-row">
+        <button class="btn btn-primary">Check my hardware <span aria-hidden="true">&rarr;</span></button>
+        <button class="btn btn-secondary"><span aria-hidden="true">&larr;</span> Back</button>
+        <button class="btn btn-secondary" disabled>Detecting&hellip;</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COACH-MARK ============ -->
+  <section class="sec">
+    <div class="sec-head">
+      <h2>Coach-mark</h2>
+      <p class="note">Same tip content as the <span class="help" aria-hidden="true">?</span> dots &mdash; one source, two entry points.</p>
+    </div>
+    <div class="coach-stage">
+      <div class="coach">
+        <button class="coach-x" aria-label="Dismiss tour">&#10005;</button>
+        <h3>KV cache precision</h3>
+        <p>Every token you feed the model is remembered in a cache that lives in VRAM
+           alongside the weights. Dropping it from <code>fp16</code> to <code>q8</code>
+           halves that cache &mdash; here, 1.07&nbsp;GB down to 0.54&nbsp;GB &mdash; for a
+           small quality cost at long context.</p>
+        <div class="coach-foot">
+          <span class="label">Tip 3 of 6</span>
+          <button class="btn btn-secondary"><span aria-hidden="true">&larr;</span> Back</button>
+          <button class="btn btn-primary">Next <span aria-hidden="true">&rarr;</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RUN IT ============ -->
+  <section class="sec">
+    <div class="sec-head">
+      <h2>Run it</h2>
+      <p class="note">The offload verdict and this command share one calculation &mdash; <code style="font-family:var(--f-mono);font-size:12px">18</code> is the layer count from the card above.</p>
+    </div>
+    <div class="runit">
+      <div class="runit-head">
+        <span class="label">Run this model</span>
+        <button class="copy" id="copyBtn" data-cmd="llama-cli -m Llama-3.3-70B-Instruct-Q4_K_M.gguf -c 8192 --n-gpu-layers 18">Copy</button>
+        <span class="engine">llama.cpp &middot; Llama 3.3 70B</span>
+      </div>
+<pre><span class="tok-cmt"># 18 of 80 layers on the RTX 4070, remainder on CPU</span>
+<span class="tok-cmd">llama-cli</span> <span class="tok-flag">-m</span> Llama-3.3-70B-Instruct-Q4_K_M.gguf <span class="tok-flag">\</span>
+          <span class="tok-flag">-c</span> 8192 <span class="tok-flag">--n-gpu-layers</span> 18</pre>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>Runcheck &middot; style reference</span>
+    <span>3px borders &middot; 14px radius &middot; 6px hard shadow &middot; no blur</span>
+  </footer>
+
+</div>
+
+<script>
+  // Segmented control + chips: pressed state is the source of truth.
+  document.querySelectorAll('.seg').forEach(function (group) {
+    group.addEventListener('click', function (e) {
+      var btn = e.target.closest('button');
+      if (!btn) return;
+      group.querySelectorAll('button').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
+    });
+  });
+
+  document.querySelectorAll('.chips').forEach(function (group) {
+    group.addEventListener('click', function (e) {
+      var btn = e.target.closest('.chip-btn');
+      if (!btn) return;
+      btn.setAttribute('aria-pressed', btn.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+    });
+  });
+
+  var copyBtn = document.getElementById('copyBtn');
+  copyBtn.addEventListener('click', function () {
+    var done = function () {
+      copyBtn.textContent = 'Copied';
+      setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1400);
+    };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(copyBtn.dataset.cmd).then(done, done);
+    } else {
+      done();
+    }
+  });
+</script>
