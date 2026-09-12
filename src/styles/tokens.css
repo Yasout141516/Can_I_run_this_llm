@@ -1,0 +1,205 @@
+:root {
+  --ground: #55547e;
+  --ground-deep: #43426a;
+  --card: #fcf9ec;
+  --card-sunk: #f1eddc;
+  --ink: #141046;
+  --ink-soft: #55507f;
+
+  --accent-a: #7c3aed;
+  --accent-b: #2f6fed;
+  --accent-c: #2dd4bf;
+  --accent-grad: linear-gradient(103deg, var(--accent-a) 0%, var(--accent-b) 58%, var(--accent-c) 100%);
+
+  --run: #2fb673;
+  --offload: #f0a429;
+  --wont: #e25548;
+
+  --bw: 3px;
+  --r: 14px;
+  --r-sm: 9px;
+  --shadow: 6px 6px 0 var(--ink);
+  --shadow-sm: 4px 4px 0 var(--ink);
+
+  --f-display: "Archivo Black", "Arial Black", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+
+/* A deliberate single-theme design: this indigo world is the product identity,
+   so every colour is painted explicitly rather than inherited from the host. */
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--card);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.label {
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.panel {
+  background: var(--card);
+  color: var(--ink);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent-c);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* ---------- status pill: icon + word + colour, never colour alone ---------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 4px 12px 4px 9px;
+  color: var(--ink);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---------- provenance badge: measured vs estimated ---------- */
+.badge {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 2px solid var(--ink);
+  border-radius: 5px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+.badge.measured { background: var(--accent-c); color: var(--ink); }
+.badge.estimated { background: transparent; color: var(--ink-soft); border-style: dashed; }
+
+/* ---------- buttons ---------- */
+.btn {
+  font-family: var(--f-display);
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 14px 22px;
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.07s steps(2), box-shadow 0.07s steps(2);
+}
+.btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink); }
+.btn:focus-visible { outline: 3px solid var(--accent-c); outline-offset: 3px; }
+.btn-primary { background: var(--accent-grad); color: #fff; text-shadow: 0 1px 0 rgba(20, 16, 70, 0.45); }
+.btn-secondary { background: var(--card); color: var(--ink); }
+.btn-ghost { background: transparent; color: var(--card); border-color: var(--card); box-shadow: var(--shadow-sm); }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+
+/* ---------- segmented control ---------- */
+.seg {
+  display: inline-flex;
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: #fff;
+}
+.seg button {
+  font-family: var(--f-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 11px 16px;
+  background: #fff;
+  color: var(--ink);
+  border: 0;
+  border-right: 2px solid var(--ink);
+  cursor: pointer;
+}
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+.seg button:focus-visible { outline: 3px solid var(--accent-a); outline-offset: -3px; }
+
+/* ---------- filter chips ---------- */
+.chip-btn {
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 7px 13px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.chip-btn[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+.chip-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+.chip-btn:focus-visible { outline: 3px solid var(--accent-c); outline-offset: 2px; }
+
+/* ---------- fields ---------- */
+.field { display: grid; gap: 7px; }
+.field > .lab { display: flex; align-items: center; gap: 8px; color: var(--ink); }
+.field .hint { font-family: var(--f-mono); font-size: 11px; color: var(--ink-soft); letter-spacing: 0.04em; }
+
+.input, .select {
+  font-family: var(--f-body);
+  font-size: 15px;
+  color: var(--ink);
+  background: #fff;
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  width: 100%;
+  box-shadow: inset 0 2px 0 rgba(20, 16, 70, 0.07);
+}
+.input::placeholder { color: #9d98b8; }
+.input:focus-visible, .select:focus-visible {
+  outline: 3px solid var(--accent-a);
+  outline-offset: 2px;
+}
+.select { appearance: none; background-image: none; cursor: pointer; font-family: var(--f-mono); font-size: 13.5px; }
+
+/* ---------- help dot — the coach-mark entry point ---------- */
+.help {
+  display: inline-grid;
+  place-items: center;
+  width: 19px; height: 19px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: help;
+  flex: none;
+}
+.help:hover { background: var(--accent-c); }
