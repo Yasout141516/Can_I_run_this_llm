@@ -5,6 +5,24 @@ export const SCHEMA_VERSION = 1;
 
 const positive = z.number().positive();
 
+export const gpuSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  vendor: z.enum(["nvidia", "amd", "intel", "apple"]),
+  vramBytes: z.number().nonnegative(),
+  memBandwidthGBs: positive.optional(),
+});
+
+export const laptopSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  kind: z.enum(["discrete-gpu", "apple-silicon", "cpu-only"]),
+  gpuId: z.string().nullable(),
+  vramBytes: z.number().nonnegative(),
+  ramBytes: positive,
+  ramType: z.enum(["DDR4", "DDR5", "LPDDR4X", "LPDDR5", "LPDDR5X", "unified"]),
+});
+
 export const quantSchema = z
   .object({
     id: z.string().min(1),
@@ -62,28 +80,10 @@ export const modelsFileSchema = z.object({
 
 export const gpusFileSchema = z.object({
   schemaVersion: z.literal(SCHEMA_VERSION),
-  gpus: z.array(
-    z.object({
-      id: z.string().min(1),
-      name: z.string().min(1),
-      vendor: z.enum(["nvidia", "amd", "intel", "apple"]),
-      vramBytes: z.number().nonnegative(),
-      memBandwidthGBs: positive.optional(),
-    }),
-  ),
+  gpus: z.array(gpuSchema),
 });
 
 export const laptopsFileSchema = z.object({
   schemaVersion: z.literal(SCHEMA_VERSION),
-  laptops: z.array(
-    z.object({
-      id: z.string().min(1),
-      name: z.string().min(1),
-      kind: z.enum(["discrete-gpu", "apple-silicon", "cpu-only"]),
-      gpuId: z.string().nullable(),
-      vramBytes: z.number().nonnegative(),
-      ramBytes: positive,
-      ramType: z.enum(["DDR4", "DDR5", "LPDDR4X", "LPDDR5", "LPDDR5X", "unified"]),
-    }),
-  ),
+  laptops: z.array(laptopSchema),
 });
