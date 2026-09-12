@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "models": [
+    {
+      "id": "meta-llama/Llama-3.1-8B-Instruct",
+      "family": "Llama 3.1",
+      "displayName": "Llama 3.1 8B Instruct",
+      "params": { "total": 8030000000, "active": null },
+      "arch": { "numLayers": 32, "numKvHeads": 8, "headDim": 128, "maxContext": 131072 },
+      "quants": [
+        { "id": "Q4_K_M", "format": "gguf", "sizeBytes": 4920734208, "sizeSource": "measured", "fileName": "Llama-3.1-8B-Instruct-Q4_K_M.gguf" },
+        { "id": "AWQ-4bit", "format": "awq", "sizeBytes": 0, "sizeSource": "estimated" }
+      ],
+      "benchmarks": { "mmlu": 69.4 },
+      "categories": ["chat"],
+      "source": { "hfRepo": "meta-llama/Llama-3.1-8B-Instruct", "fetchedAt": "2026-09-12T00:00:00Z" }
+    },
+    {
+      "id": "meta-llama/Llama-3.3-70B-Instruct",
+      "family": "Llama 3.3",
+      "displayName": "Llama 3.3 70B Instruct",
+      "params": { "total": 70600000000, "active": null },
+      "arch": { "numLayers": 80, "numKvHeads": 8, "headDim": 128, "maxContext": 131072 },
+      "quants": [
+        { "id": "Q4_K_M", "format": "gguf", "sizeBytes": 42500000000, "sizeSource": "measured", "fileName": "Llama-3.3-70B-Instruct-Q4_K_M.gguf" }
+      ],
+      "benchmarks": { "mmlu": 86.0 },
+      "categories": ["chat", "reasoning"],
+      "source": { "hfRepo": "meta-llama/Llama-3.3-70B-Instruct", "fetchedAt": "2026-09-12T00:00:00Z" }
+    },
+    {
+      "id": "Qwen/Qwen3-235B-A22B",
+      "family": "Qwen3",
+      "displayName": "Qwen3 235B A22B",
+      "params": { "total": 235000000000, "active": 22000000000 },
+      "arch": { "numLayers": 94, "numKvHeads": 4, "headDim": 128, "maxContext": 32768 },
+      "quants": [
+        { "id": "Q4_K_M", "format": "gguf", "sizeBytes": 0, "sizeSource": "estimated" }
+      ],
+      "benchmarks": { "mmlu": null },
+      "categories": ["reasoning"],
+      "source": { "hfRepo": "Qwen/Qwen3-235B-A22B", "fetchedAt": "2026-09-12T00:00:00Z" }
+    }
+  ]
+}

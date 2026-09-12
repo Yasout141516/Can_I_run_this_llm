@@ -1,0 +1,7 @@
+{
+  "scores": {
+    "meta-llama/Llama-3.1-8B-Instruct": { "mmlu": 69.4, "_source": "Meta Llama 3.1 model card" },
+    "meta-llama/Llama-3.3-70B-Instruct": { "mmlu": 86.0, "_source": "Meta Llama 3.3 model card" },
+    "Qwen/Qwen3-235B-A22B": { "mmlu": null, "_source": "not reported" }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "laptops": [
+    { "id": "macbook-pro-16-m3-max-64", "name": "MacBook Pro 16\" M3 Max (64GB)", "kind": "apple-silicon", "gpuId": "apple-m3-max", "vramBytes": 0, "ramBytes": 64000000000, "ramType": "unified" },
+    { "id": "macbook-pro-14-m4-pro-24", "name": "MacBook Pro 14\" M4 Pro (24GB)", "kind": "apple-silicon", "gpuId": "apple-m4-pro", "vramBytes": 0, "ramBytes": 24000000000, "ramType": "unified" },
+    { "id": "legion-pro-7i-4090", "name": "Lenovo Legion Pro 7i (RTX 4090 laptop)", "kind": "discrete-gpu", "gpuId": "rtx-4090", "vramBytes": 16000000000, "ramBytes": 32000000000, "ramType": "DDR5" },
+    { "id": "rog-zephyrus-g14-4060", "name": "ASUS ROG Zephyrus G14 (RTX 4060)", "kind": "discrete-gpu", "gpuId": "rtx-4060-ti-8", "vramBytes": 8000000000, "ramBytes": 16000000000, "ramType": "LPDDR5X" },
+    { "id": "framework-16-7700s", "name": "Framework Laptop 16", "kind": "discrete-gpu", "gpuId": null, "vramBytes": 8000000000, "ramBytes": 32000000000, "ramType": "DDR5" }
+  ]
+}

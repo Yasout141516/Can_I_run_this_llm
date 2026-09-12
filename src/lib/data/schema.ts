@@ -8,7 +8,7 @@ export const quantSchema = z
   .object({
     id: z.string().min(1),
     format: z.enum(["gguf", "awq", "gptq", "fp8", "safetensors"]),
-    sizeBytes: positive,
+    sizeBytes: z.number().nonnegative(),
     sizeSource: z.enum(["measured", "estimated"]),
     fileName: z.string().min(1).optional(),
   })

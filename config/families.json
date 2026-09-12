@@ -1,0 +1,7 @@
+{
+  "families": [
+    { "name": "Llama 3.1", "hfOrg": "meta-llama", "repos": ["Llama-3.1-8B-Instruct", "Llama-3.1-70B-Instruct"], "categories": ["chat"] },
+    { "name": "Llama 3.3", "hfOrg": "meta-llama", "repos": ["Llama-3.3-70B-Instruct"], "categories": ["chat", "reasoning"] },
+    { "name": "Qwen3", "hfOrg": "Qwen", "repos": ["Qwen3-235B-A22B"], "categories": ["reasoning"] }
+  ]
+}
