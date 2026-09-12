@@ -42,7 +42,7 @@ describe("ModelList", () => {
   it("shows the memory need and what share of the card it takes", () => {
     render(
       <MemoryRouter>
-        <ModelList rows={rows()} vramBytes={12 * GB} />
+        <ModelList rows={rows()} vramBytes={12 * GB} filtered={false} />
       </MemoryRouter>,
     );
     const card = screen.getByTestId("card-meta-llama/Llama-3.1-8B-Instruct");
@@ -53,7 +53,7 @@ describe("ModelList", () => {
   it("labels each verdict in words as well as colour", () => {
     render(
       <MemoryRouter>
-        <ModelList rows={rows()} vramBytes={12 * GB} />
+        <ModelList rows={rows()} vramBytes={12 * GB} filtered={false} />
       </MemoryRouter>,
     );
     expect(screen.getByText("Run on GPU")).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe("ModelList", () => {
   it("names the creator and the context window, the two fields a scanner uses", () => {
     render(
       <MemoryRouter>
-        <ModelList rows={rows()} vramBytes={12 * GB} />
+        <ModelList rows={rows()} vramBytes={12 * GB} filtered={false} />
       </MemoryRouter>,
     );
     const card = screen.getByTestId("card-meta-llama/Llama-3.1-8B-Instruct");
@@ -75,10 +75,33 @@ describe("ModelList", () => {
     const tiny: HardwareSpec = { kind: "discrete-gpu", vramBytes: 2 * GB, ramBytes: 4 * GB };
     render(
       <MemoryRouter>
-        <ModelList rows={scoreModels(loadModels(), tiny, settings)} vramBytes={2 * GB} />
+        <ModelList
+          rows={scoreModels(loadModels(), tiny, settings)}
+          vramBytes={2 * GB}
+          filtered={false}
+        />
       </MemoryRouter>,
     );
     expect(screen.getByText(/nothing here fits/i)).toBeInTheDocument();
+  });
+
+  it("does not blame the whole machine when a filter is what narrowed the list to unrunnable models", () => {
+    // Same tiny machine, same all-wont-run result set, but this time it is
+    // framed as a search/category match rather than the full catalogue — the
+    // machine-level message would overstate what the hardware can do, so the
+    // cards should render instead, each with its own accurate verdict.
+    const tiny: HardwareSpec = { kind: "discrete-gpu", vramBytes: 2 * GB, ramBytes: 4 * GB };
+    render(
+      <MemoryRouter>
+        <ModelList
+          rows={scoreModels(loadModels(), tiny, settings)}
+          vramBytes={2 * GB}
+          filtered
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByText(/nothing here fits/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Llama 3.1 8B Instruct")).toBeInTheDocument();
   });
 });
 

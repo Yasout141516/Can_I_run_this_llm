@@ -263,15 +263,30 @@ body {
 .why { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
 .why b { color: var(--ink); }
 
-/* ---------- model report: header side panel ---------- */
+/* ---------- masthead (shared by the calculator and the model report) ---------- */
 .mast {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px 26px;
 }
-.mast h1 { margin: 6px 0 0; color: var(--card); }
+.mast h1 {
+  font-family: var(--f-display);
+  font-size: clamp(30px, 5.4vw, 50px);
+  line-height: 1.02;
+  letter-spacing: -.015em;
+  margin: 6px 0 0;
+  text-wrap: balance;
+  color: var(--card);
+  text-shadow: 3px 3px 0 var(--ink);
+}
+.mast .eyebrow { color: var(--accent-c); }
+.mast p {
+  margin: 10px 0 0;
+  max-width: 52ch;
+  color: #ded9f2;
+}
 /* .v-arch is styled for use on a cream card (ModelCard); reused here on the
    masthead's dark ground it needs a light colour instead, or ink-soft on
    ink-soft is nearly unreadable. */

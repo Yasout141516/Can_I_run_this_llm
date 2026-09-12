@@ -26,6 +26,7 @@ export function CalculatorPage() {
   );
 
   const vram = usableVram(form.hw);
+  const filtered = query.trim() !== "" || categories.length > 0;
 
   return (
     <main className="wrap">
@@ -60,7 +61,7 @@ export function CalculatorPage() {
             onView={setView}
           />
           {view === "cards" ? (
-            <ModelList rows={shown} vramBytes={vram} />
+            <ModelList rows={shown} vramBytes={vram} filtered={filtered} />
           ) : (
             <ModelTable rows={shown} vramBytes={vram} />
           )}
