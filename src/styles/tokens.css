@@ -206,3 +206,59 @@ body {
 
 .badge.tight { background: var(--offload); color: var(--ink); border-style: solid; }
 .empty { background: var(--card); color: var(--ink); border: var(--bw) dashed var(--ink-soft); border-radius: var(--r); padding: 22px; margin: 0; }
+
+/* ---------- page layout ---------- */
+.wrap { max-width: 1180px; margin: 0 auto; padding: 40px 22px 96px; display: flex; flex-direction: column; gap: 34px; }
+.layout { display: grid; grid-template-columns: 340px 1fr; gap: 26px; align-items: start; }
+.hardware-panel { display: grid; gap: 18px; position: sticky; top: 22px; }
+.results { display: flex; flex-direction: column; gap: 18px; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.verdicts { display: grid; gap: 16px; }
+.model-table { width: 100%; border-collapse: collapse; background: var(--card); color: var(--ink); border: var(--bw) solid var(--ink); border-radius: var(--r); }
+.model-table th, .model-table td { padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--ink-soft); font-variant-numeric: tabular-nums; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .hardware-panel { position: static; } .tiles { grid-template-columns: 1fr; } }
+
+/* ---------- stat tiles ---------- */
+/* .tile and .verdict/.card/.v-* are consumed by StatTiles and ModelCard
+   (built in earlier tasks) but were never given rules — invisible in jsdom
+   unit tests, since those don't render CSS, but glaringly broken (numbers and
+   labels run together, cards with no border, badge text unreadable against
+   the page background) the first time this assembles into a real page. */
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--card);
+  color: var(--ink);
+  border: var(--bw) solid var(--ink);
+  border-top: 6px solid var(--tone);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 16px;
+}
+.tile .n { font-family: var(--f-display); font-size: 30px; line-height: 1; }
+.tile .label { color: var(--ink-soft); }
+
+/* ---------- model card ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict.card {
+  display: grid;
+  gap: 12px;
+  background: var(--card);
+  color: var(--ink);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  padding: 18px 20px;
+}
+.v-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.v-name { font-family: var(--f-display); font-size: 16px; color: var(--ink); text-decoration: none; }
+.v-name:hover, .v-name:focus-visible { text-decoration: underline; }
+.v-arch { font-family: var(--f-mono); font-size: 12px; color: var(--ink-soft); }
+.v-spacer { flex: 1 1 auto; }
+.v-body { display: grid; gap: 8px; }
+.bar-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-soft); }
+.bar-head b { color: var(--ink); }
+.why { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+.why b { color: var(--ink); }
