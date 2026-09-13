@@ -22,13 +22,42 @@ function quantIdOf(fileName: string): string | null {
   );
 }
 
+interface Group {
+  bytes: number;
+  /** Part indices seen so far (from SPLIT's first capture group), or {1} for
+   *  a non-split file. A count alone cannot tell a missing part from a
+   *  duplicated one — two files both claiming "part 1 of 2" would match a
+   *  count of 2 while never covering part 2 at all — so the actual indices
+   *  are what gets checked, not how many files arrived. */
+  indices: Set<number>;
+  expected: number;
+  fileName: string;
+  /** Set once a later file disagrees with the group's established `expected`
+   *  part count, or repeats a part index already seen. Either is a malformed
+   *  group, dropped exactly like a missing part — never merged, never
+   *  guessed at. */
+  invalid: boolean;
+}
+
+/** True when `indices` is exactly {1, 2, ..., expected} — no gap, no extra,
+ *  no duplicate (duplicates are caught earlier and flip `invalid` instead,
+ *  since a Set can't represent "the same index arrived twice"). */
+function isCompleteRun(indices: Set<number>, expected: number): boolean {
+  if (indices.size !== expected) return false;
+  for (let i = 1; i <= expected; i++) {
+    if (!indices.has(i)) return false;
+  }
+  return true;
+}
+
 /**
  * Real file sizes, with split quantisations summed. A split whose parts are
- * not all present is dropped: an under-reported size is worse than an
- * estimate, because it arrives wearing a "measured" badge.
+ * not all present — missing, duplicated, or disagreeing on the total part
+ * count — is dropped entirely: an under- or over-reported size is worse than
+ * an estimate, because it arrives wearing a "measured" badge and is believed.
  */
 export function measuredQuants(siblings: { rfilename: string; size?: number }[]): QuantOption[] {
-  const groups = new Map<string, { bytes: number; parts: number; expected: number; fileName: string }>();
+  const groups = new Map<string, Group>();
 
   for (const { rfilename, size } of siblings) {
     if (!rfilename.endsWith(".gguf") || typeof size !== "number") continue;
@@ -37,21 +66,34 @@ export function measuredQuants(siblings: { rfilename: string; size?: number }[])
 
     const split = SPLIT.exec(rfilename);
     // Both capture groups in SPLIT are mandatory (neither is followed by
-    // `?`), so a non-null `exec` result guarantees group 2 matched some
-    // 5-digit string; noUncheckedIndexedAccess just can't see that from the
-    // pattern, so the assertion is justified rather than asserted past.
+    // `?`), so a non-null `exec` result guarantees groups 1 and 2 each
+    // matched a 5-digit string; noUncheckedIndexedAccess just can't see
+    // that from the pattern, so the assertion is justified rather than
+    // asserted past.
+    const partIndex = split ? Number(split[1]!) : 1;
     const expected = split ? Number(split[2]!) : 1;
-    const prev = groups.get(id) ?? { bytes: 0, parts: 0, expected, fileName: rfilename };
-    groups.set(id, {
-      bytes: prev.bytes + size,
-      parts: prev.parts + 1,
-      expected,
-      fileName: prev.fileName,
-    });
+
+    const group = groups.get(id);
+    if (group === undefined) {
+      groups.set(id, { bytes: size, indices: new Set([partIndex]), expected, fileName: rfilename, invalid: false });
+      continue;
+    }
+
+    // A later part naming a different total, or repeating an index this
+    // group already has, makes the whole group unsizeable — flag it and
+    // stop trusting its byte count, rather than silently overwriting
+    // `expected` or double-counting a duplicated part's bytes.
+    if (group.expected !== expected || group.indices.has(partIndex)) {
+      group.invalid = true;
+      continue;
+    }
+
+    group.indices.add(partIndex);
+    group.bytes += size;
   }
 
   return [...groups.entries()]
-    .filter(([, g]) => g.parts === g.expected)
+    .filter(([, g]) => !g.invalid && isCompleteRun(g.indices, g.expected))
     .map(([id, g]) => ({
       id,
       format: "gguf" as const,
