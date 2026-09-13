@@ -1,7 +1,32 @@
 {
   "families": [
-    { "name": "Llama 3.1", "hfOrg": "meta-llama", "repos": ["Llama-3.1-8B-Instruct", "Llama-3.1-70B-Instruct"], "categories": ["chat"] },
-    { "name": "Llama 3.3", "hfOrg": "meta-llama", "repos": ["Llama-3.3-70B-Instruct"], "categories": ["chat", "reasoning"] },
-    { "name": "Qwen3", "hfOrg": "Qwen", "repos": ["Qwen3-235B-A22B"], "categories": ["reasoning"] }
+    {
+      "name": "Llama 3.1",
+      "hfOrg": "meta-llama",
+      "categories": ["chat"],
+      "repos": [
+        { "name": "Llama-3.1-8B-Instruct",
+          "archRepo": "unsloth/Meta-Llama-3.1-8B-Instruct",
+          "ggufRepo": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF" }
+      ]
+    },
+    {
+      "name": "Llama 3.3",
+      "hfOrg": "meta-llama",
+      "categories": ["chat", "reasoning"],
+      "repos": [
+        { "name": "Llama-3.3-70B-Instruct",
+          "archRepo": "unsloth/Llama-3.3-70B-Instruct",
+          "ggufRepo": "bartowski/Llama-3.3-70B-Instruct-GGUF" }
+      ]
+    },
+    {
+      "name": "Qwen3",
+      "hfOrg": "Qwen",
+      "categories": ["reasoning"],
+      "repos": [
+        { "name": "Qwen3-235B-A22B", "activeParams": 22000000000 }
+      ]
+    }
   ]
 }

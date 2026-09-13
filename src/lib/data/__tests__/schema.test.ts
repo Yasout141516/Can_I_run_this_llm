@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { modelsFileSchema, SCHEMA_VERSION } from "../schema";
+import familiesJson from "../../../../config/families.json";
+import { familiesFileSchema } from "../schema";
 
 const validModel = {
   id: "meta-llama/Llama-3.1-8B-Instruct",
@@ -92,5 +94,21 @@ describe("modelsFileSchema", () => {
   it("accepts known benchmark keys with null values", () => {
     const benchmarks = { mmlu: null, gpqa: null, swe_bench: 42.1 };
     expect(modelsFileSchema.safeParse(file([{ ...validModel, benchmarks }])).success).toBe(true);
+  });
+});
+
+describe("familiesFileSchema", () => {
+  it("accepts the tracked families as written", () => {
+    expect(() => familiesFileSchema.parse(familiesJson)).not.toThrow();
+  });
+
+  it("requires an archRepo for a gated org, because config.json 401s there", () => {
+    const gated = {
+      families: [
+        { name: "Llama 3.1", hfOrg: "meta-llama", categories: ["chat"],
+          repos: [{ name: "Llama-3.1-8B-Instruct" }] },
+      ],
+    };
+    expect(() => familiesFileSchema.parse(gated)).toThrow(/archRepo/);
   });
 });
