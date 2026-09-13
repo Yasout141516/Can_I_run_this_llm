@@ -1,16 +1,26 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import { GB, type HardwareSpec } from "../../../lib/compat";
+import { evaluate, GB, type HardwareSpec } from "../../../lib/compat";
 import { loadModels } from "../../../lib/data/load";
-import { isTightFit, scoreModels } from "../useVerdicts";
+import { isTightFit, scoreModels, type ScoredModel } from "../useVerdicts";
 import { ModelList } from "../ModelList";
 import { StatTiles } from "../StatTiles";
-import { REFERENCE_HW, REFERENCE_SETTINGS, TINY_HW } from "./fixtures";
+import { APPLE_HW, REFERENCE_HW, REFERENCE_SETTINGS, TINY_HW } from "./fixtures";
 
 const hw = REFERENCE_HW;
 const settings = REFERENCE_SETTINGS;
 const rows = () => scoreModels(loadModels(), hw, settings);
+
+/**
+ * A genuinely null-breakdown row: vLLM has no Metal backend, so the engine
+ * guard rejects this model on Apple Silicon before any memory arithmetic
+ * runs. Built via a real evaluate() call, not a hand-written Verdict.
+ */
+const unevaluableRow: ScoredModel = {
+  model: loadModels()[0]!,
+  verdict: evaluate(loadModels()[0]!, APPLE_HW, { ...settings, engine: "vllm" }),
+};
 
 describe("scoreModels", () => {
   it("scores every model in the input, in order, without dropping or reordering any", () => {
@@ -102,6 +112,25 @@ describe("ModelList", () => {
       </MemoryRouter>,
     );
     expect(screen.getByText(/nothing here fits/i)).toBeInTheDocument();
+  });
+
+  it("shows an em-dash rather than a fabricated size for a model the engine never evaluated", () => {
+    // Reverting ModelCard's null check back to reading
+    // `verdict.breakdown.totalBytes` directly would throw on this row;
+    // coalescing it to zero instead would silently print "0 GB · 0%",
+    // telling the user this unevaluated model needs nothing.
+    expect(unevaluableRow.verdict.breakdown).toBeNull();
+    render(
+      <MemoryRouter>
+        {/* filtered: true — a single-row, all-wont-run result set is otherwise
+            read as "nothing fits this machine" and rendered as a summary
+            message instead of the cards (see ResultsEmptyState). */}
+        <ModelList rows={[unevaluableRow]} vramBytes={12 * GB} filtered />
+      </MemoryRouter>,
+    );
+    const card = screen.getByTestId(`card-${unevaluableRow.model.id}`);
+    expect(within(card).getAllByText("—").length).toBeGreaterThanOrEqual(2);
+    expect(within(card).queryByText(/0 (MB|GB)/)).not.toBeInTheDocument();
   });
 
   it("does not blame the whole machine when a filter is what narrowed the list to unrunnable models", () => {

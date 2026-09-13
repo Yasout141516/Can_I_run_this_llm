@@ -1,16 +1,28 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import { GB } from "../../../lib/compat";
+import { evaluate, GB } from "../../../lib/compat";
 import { loadModels } from "../../../lib/data/load";
-import { scoreModels } from "../useVerdicts";
+import { scoreModels, type ScoredModel } from "../useVerdicts";
 import { applyFilters, matchesModel, sortModels, sortRows } from "../sort";
 import { ModelTable } from "../ModelTable";
-import { REFERENCE_HW, REFERENCE_SETTINGS, TINY_HW } from "./fixtures";
+import { APPLE_HW, REFERENCE_HW, REFERENCE_SETTINGS, TINY_HW } from "./fixtures";
 
 const hw = REFERENCE_HW;
 const settings = REFERENCE_SETTINGS;
 const rows = scoreModels(loadModels(), hw, settings);
+
+/**
+ * A genuinely null-breakdown row, produced the same way evaluate() produces
+ * one in the app: vLLM has no Metal backend, so the engine guard rejects
+ * this model on Apple Silicon before any memory arithmetic runs at all.
+ * Built via a real evaluate() call rather than a hand-written Verdict
+ * literal, so this can't drift from what the engine actually returns.
+ */
+const unevaluableRow: ScoredModel = {
+  model: loadModels()[0]!,
+  verdict: evaluate(loadModels()[0]!, APPLE_HW, { ...settings, engine: "vllm" }),
+};
 
 describe("applyFilters", () => {
   it("matches on display name, case-insensitively", () => {
@@ -51,6 +63,24 @@ describe("sortRows", () => {
     sortRows(rows, "size");
     expect(rows.map((r) => r.model.id)).toEqual(before);
   });
+
+  it("sorts an unevaluable (null-breakdown) model last by size", () => {
+    // Reverting the `?? Infinity` fallback to `?? 0` would put this row
+    // FIRST — a model the engine could not even assess would look like the
+    // smallest thing in the catalogue, which is a user-visible wrong answer.
+    expect(unevaluableRow.verdict.breakdown).toBeNull();
+    const sorted = sortRows([...rows, unevaluableRow], "size");
+    expect(sorted[sorted.length - 1]).toBe(unevaluableRow);
+  });
+
+  it("sorts an unevaluable (null-breakdown) model last by compatibility too", () => {
+    // wont-run is already the lowest-priority status bucket; within it, a
+    // `?? 0` fallback would still reorder this row to the FRONT of that
+    // bucket (0 sorts before a real multi-GB total) instead of to the back.
+    expect(unevaluableRow.verdict.status).toBe("wont-run");
+    const sorted = sortRows([...rows, unevaluableRow], "compatibility");
+    expect(sorted[sorted.length - 1]).toBe(unevaluableRow);
+  });
 });
 
 describe("ModelTable", () => {
@@ -73,6 +103,25 @@ describe("ModelTable", () => {
     const wontRun = rows.find((r) => r.verdict.status === "wont-run");
     expect(wontRun!.verdict.notes[0]).toBeTruthy();
     expect(screen.getByText(wontRun!.verdict.notes[0]!)).toBeInTheDocument();
+  });
+
+  it("shows an em-dash rather than a fabricated size for a model the engine never evaluated", () => {
+    // Reverting ModelTable's null check back to reading
+    // `verdict.breakdown.totalBytes` directly would throw on this row (null
+    // has no .totalBytes); reverting it to some zero-coalescing fallback
+    // instead would silently print "0 MB · 0%", telling the user this model
+    // needs nothing — worse than telling them nothing at all.
+    render(
+      <MemoryRouter>
+        {/* filtered: true — a single-row, all-wont-run result set is otherwise
+            read as "nothing fits this machine" and rendered as a summary
+            message instead of the table (see ResultsEmptyState). */}
+        <ModelTable rows={[unevaluableRow]} vramBytes={12 * GB} filtered />
+      </MemoryRouter>,
+    );
+    const row = screen.getByRole("row", { name: new RegExp(unevaluableRow.model.displayName) });
+    expect(within(row).getAllByText("—").length).toBeGreaterThanOrEqual(2);
+    expect(within(row).queryByText(/0 (MB|GB)/)).not.toBeInTheDocument();
   });
 
   // The table used to drop straight to a bare header row with none of the
