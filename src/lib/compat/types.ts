@@ -32,7 +32,7 @@ export interface ModelSpec {
   quants: QuantOption[];
   benchmarks: Partial<Record<BenchmarkId, number | null>>;
   categories: Category[];
-  source: { hfRepo: string; ggufRepo?: string; fetchedAt: string };
+  source: { hfRepo: string; archRepo?: string; ggufRepo?: string; fetchedAt: string };
 }
 
 export type HardwareKind = "discrete-gpu" | "apple-silicon" | "cpu-only";
