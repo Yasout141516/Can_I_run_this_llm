@@ -20,74 +20,91 @@ Approved visual design: [`docs/design/style-reference.html`](docs/design/style-r
 | Plan | State |
 |---|---|
 | 1 — Foundation & compatibility engine | **Merged.** Pure engine + validated data layer. |
-| 2 — Calculator UI & model report | **Merged.** `/` calculator, `/model/:id` report. |
+| 2 — Calculator UI & model report | **Merged.** `/calculator`, `/model/:id` report. |
+| Welcome page + box-sizing fix | **Done this session**, see below. |
+| Nav bar, Browse page, home best-fits | **Done this session**, see below. |
 | 3 — Ingestion pipeline + GitHub Actions cron | Not started. Only 3 seed models ship today. |
 | 4 — Benchmarks page, `/detect`, coach-mark tour | Not started. |
 
-`main` is green: **160 tests across 18 files**, `npm run build` clean. `npm run dev` serves on
+`main` is green: **201 tests across 22 files**, `npm run build` clean. `npm run dev` serves on
 http://localhost:5173.
 
-## Two things are queued and ready to start
+## What this session did
 
-### 1. Welcome landing page — design APPROVED, not yet implemented
+Both items that were queued as ready are implemented, tested and green — not yet committed
+at the time of writing.
 
-The user asked for a front door rather than landing straight on results. Design agreed in
-conversation; no code written. Implement it as a **bounded** change (no spec, no plan doc) —
-the approval gate has already been passed.
+### 1. Welcome landing page — done
 
-**Routing.** `/` → new `WelcomePage`; the calculator moves to `/calculator`; `/model/:id`
-unchanged. `HardwareProvider` stays above all three so hardware survives navigation.
+`/` is now `WelcomePage`; the calculator moved to `/calculator`; `/model/:id` unchanged, with
+`HardwareProvider` still above all three. The landing page carries the masthead copy, a legend
+of the three verdicts rendered with the real `VerdictPill`, a primary CTA into the calculator,
+and one line on the differentiator. It quotes no live numbers — there is a test asserting it
+renders *outside* a `HardwareProvider`, which is what pins that down.
 
-**Landing content.** The masthead copy that lives on the calculator today (eyebrow
-"WILL IT RUN?", `Runcheck`, the one-line pitch), then what the three verdicts *mean* —
-rendered with the real `VerdictPill` so the legend is the same component the results use, not
-a drawing of it. Then a primary CTA into the calculator, and one line on the differentiator:
-every answer shows its arithmetic. **No live data on it** — with 3 seed models "3 models
-tracked" undersells; add that line after Plan 3.
+`Button.tsx` is back, as a router `Link` styled `.btn .btn-primary`. It deliberately renders an
+anchor, not a `<button>`: its only consumer is a destination. If the Plan 4 coach-mark needs a
+real button, give the file a sibling rather than widening this one. The restored `.btn` CSS
+block omits `.btn-ghost`, `.btn-secondary` and `.btn[disabled]` — no consumer, and `/simplify`
+would delete them again.
 
-**`Button` comes back.** Plan 2 deliberately dropped `Button.tsx` (nothing imported it), and
-the `/simplify` pass then deleted the `.btn` CSS block as dead. A CTA is the consumer that was
-missing. Restore both from `docs/design/style-reference.html` — the `steps(2)` press with a
-4px translate into the shadow is spec §9's identity-carrying detail and currently applies to
-nothing clickable.
+Both report back-links now point at `/calculator`. The shared-state regression test moved to
+`initialEntries={["/calculator"]}` with its assertions untouched — it still fails if the shared
+`HardwareProvider` is removed.
 
-**Files:**
-- Create `src/pages/WelcomePage.tsx`, `src/components/ui/Button.tsx`, plus tests
-- Modify `src/App.tsx` (routes), `src/styles/tokens.css` (restore `.btn`, add landing rules)
-- Modify `src/features/report/ModelReport.tsx` — **both** back-links currently point at `/`
-  (lines ~27 and ~39); they become `/calculator`
-- Update `src/features/report/__tests__/report.test.tsx:74` — the shared-state regression test
-  renders the real `<App/>` with `initialEntries={["/"]}` and expects the calculator. It
-  becomes `["/calculator"]`. **Do not weaken this test** — it is the only guard that fails if
-  the shared `HardwareProvider` is removed.
+### 2. Form inputs overflowing their panel — done
 
-**Explicitly not in scope:** no hardware wizard, no overlay, no persistent nav bar, no
-localStorage "skip the welcome". Each is its own decision.
+`*, *::before, *::after { box-sizing: border-box; }` added near the top of `tokens.css`, and the
+same reset added to `docs/design/style-reference.html`, which had the identical defect and would
+otherwise reintroduce it on the next port.
 
-**Testing:** landing renders and its CTA links to `/calculator`; `App` routes `/` to the
-welcome page and `/calculator` to the tool; the report's back-link points at `/calculator`.
-Existing `CalculatorPage` tests render the component directly and are unaffected — including
-"results at rest, no submit step", which still holds for the calculator itself.
+Three explicitly-sized bordered elements were bumped to keep the geometry the approved design
+renders, now that the border counts inward: `.help` 19→23px, `.legend i` 11→15px, `.bar`
+height 30→34px, in both files. The memory-bar segments and `.model-table` are *improved* rather
+than affected — each previously overflowed its container by its own border width and now sums
+exactly.
 
-### 2. Form inputs overflow their panel — diagnosed, one-line fix
+**Still open: nobody has looked at the running app.** The analysis above is static reading of
+the CSS; no browser automation is installed in this repo and none was added. `npm run dev`,
+then eyeball the hardware panel, the table view and the report's memory bar.
 
-**Symptom:** in the hardware panel, the VRAM and System RAM number inputs render wider than
-the cream card and spill past its right border. The `<select>` controls beside them fit.
+### 3. Nav bar, Browse page, home best-fits — done
 
-**Root cause (verified, not guessed):** `box-sizing` is never set anywhere in
-`src/styles/tokens.css`. `.input, .select` at line ~150 sets `width: 100%` plus
-`padding: 12px 14px` and `border: var(--bw)` (3px) — so the rendered box is 34px wider than
-its container. The asymmetry is because Chrome's UA stylesheet already gives `<select>`
-`box-sizing: border-box` while `input[type=number]` stays `content-box`.
+Brainstormed and approved in conversation; no spec doc, by agreement, once Compare was dropped
+from scope. Routes are now:
 
-**Fix:** add the standard reset near the top of `tokens.css`:
-
-```css
-*, *::before, *::after { box-sizing: border-box; }
+```
+/            Home       hero + verdict legend + best-fits list
+/calculator  Check my hardware — unchanged
+/browse      Browse LLMs — the catalogue
+/model/:id   Report — unchanged
 ```
 
-One rule, fixes every current and future instance. Check the table view and the memory bar
-afterwards — both use percentage widths and should be unaffected, but look rather than assume.
+`Nav` sits above `<Routes>` inside `HardwareProvider`, on every page. `NavLink` marks the active
+route with `aria-current="page"`, styled as the inverted-ink treatment a pressed chip uses. The
+wordmark is a `Link`, never an `h1` — home owns the only one.
+
+**Browse is deliberately verdict-free.** It answers "what is this model": family, params (with
+the MoE split), layers, max context, smallest quant with its measured/estimated provenance,
+categories. No hardware, no pills — whether it runs is the calculator's question and the
+report's. There is a test asserting no verdict text appears there.
+
+To let both lists share one definition of "matches", `applyFilters` was split: `matchesModel()`
+is the predicate, `applyFilters()` is its `ScoredModel[]` wrapper, and Browse filters bare
+`ModelSpec[]` through the same function. Sorting splits by what it needs: verdict-dependent keys
+stay in `sortRows`, data-only keys (`name`/`params`/`context`/`size`, where size is the smallest
+quant) live in `sortModels`. `Filters` is now generic over its sort-key type and takes a
+`sortOptions` list, so a page cannot offer a sort its list cannot perform; its view toggle is
+optional and Browse passes none.
+
+**Home now scores models**, so the welcome page's "renders outside a HardwareProvider" test is
+gone — that test pinned a design decision that has since been reversed, and was deleted rather
+than weakened. Home shows the six best fits via the existing `ModelCard`, ordered by
+`sortRows(rows, "compatibility")`, above a `Browse all models →` link.
+
+`HardwareSummary` (in `src/features/hardware/`) states the machine a page scored against, with
+`change →` into the calculator. **It is the fix for known gap 3** — drop it into `ModelReport`
+and a deep-linked report stops saying "of your VRAM" about hardware the recipient never set.
 
 ## Architecture, in one screen
 
@@ -100,14 +117,16 @@ data/laptops.json         5 laptops, hand-curated
 src/lib/compat/           THE ENGINE — pure, no React/fetch/fs/clock/locale
 src/lib/data/             schema validation + load-once
 src/lib/ui/               format.ts, paths.ts
-src/components/ui/        Badge, Chip, Field, HelpDot, Pill, Segmented,
+src/components/Nav.tsx    the persistent nav bar
+src/components/ui/        Badge, Button, Chip, Field, HelpDot, Pill, Segmented,
                           TightFitBadge, WhyNote
 src/hooks/                useHardwareForm (+ HardwareProvider)
-src/features/hardware/    HardwarePanel, DeviceLookup
+src/features/hardware/    HardwarePanel, DeviceLookup, HardwareSummary
+src/features/browse/      CatalogTable
 src/features/results/     useVerdicts, StatTiles, Filters, ModelList,
                           ModelCard, ModelTable, sort, ResultsEmptyState
 src/features/report/      ModelReport, MemoryBar, QuantTable, RunItBlock
-src/pages/                CalculatorPage
+src/pages/                WelcomePage, CalculatorPage, BrowsePage
 ```
 
 ## Rules that are settled — do not relitigate without a reason
@@ -141,13 +160,16 @@ From the final review of Plan 2. Full detail in the carried-into-plan-3 note.
    before computing" from `totalBytes === 0` — shape-inference the engine should state
    outright (`breakdown: Breakdown | null`). Every new early-return guard in `evaluate()` must
    currently remember to zero the breakdown for this to keep working. **Do this in Plan 3.**
-2. **The report shows no benchmark scores**, though spec §8 lists them and the data is
-   populated and validated. A plan-level omission.
+2. **Benchmark scores still render nowhere** — not on the report (spec §8 lists them), not on
+   Browse, though the data is populated and validated. Browse is their natural home; it was
+   left out of that page's scope deliberately rather than widened without asking.
 3. **A deep-linked report has no hardware summary** — `/model/:id` says "of your VRAM" while
-   scoring against the recipient's defaults, with nothing saying so.
+   scoring against the recipient's defaults, with nothing saying so. `HardwareSummary` now
+   exists and solves exactly this; it just has not been added to the report.
 4. **No SPA fallback for `BrowserRouter`.** No `vercel.json` / `netlify.toml` / `_redirects`.
-   On a plain static host, a direct request to `/model/:id` 404s. Whoever owns deployment
-   needs a rewrite rule — and the welcome page makes this more visible, not less.
+   On a plain static host, a direct request to `/model/:id` or `/browse` 404s. **Now four
+   deep-linkable routes, so this is worse than when it was written.** Two-line file; flagged
+   and deliberately not fixed without a decision on the host.
 5. **"Of your VRAM" understates vLLM and SGLang** — the percentage is of full `usableVram`,
    but those engines only get `memoryUtilization` (90%) of it.
 6. **Heading hierarchy is thin** — one `h1`, no `h2`s; model names are links, not headings.

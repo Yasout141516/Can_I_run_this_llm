@@ -24,7 +24,7 @@ export function ModelReport() {
     return (
       <main className="wrap">
         <p className="empty">
-          That model is not tracked. <Link to="/">Back to the calculator</Link>.
+          That model is not tracked. <Link to="/calculator">Back to the calculator</Link>.
         </p>
       </main>
     );
@@ -36,7 +36,7 @@ export function ModelReport() {
 
   return (
     <main className="wrap">
-      <Link className="label" to="/">← Back to all models</Link>
+      <Link className="label" to="/calculator">← Back to all models</Link>
 
       <header className="mast" data-testid="report-masthead" aria-label="Model summary">
         <div>

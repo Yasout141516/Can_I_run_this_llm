@@ -36,6 +36,8 @@
     --f-mono:    "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
   }
 
+  *, *::before, *::after { box-sizing: border-box; }
+
   /* Deliberate single-theme design: this indigo world IS the product identity,
      so every color is painted explicitly rather than inherited from the host. */
 
@@ -85,7 +87,7 @@
   .help {
     display: inline-grid;
     place-items: center;
-    width: 19px; height: 19px;
+    width: 23px; height: 23px;
     border: 2px solid var(--ink);
     border-radius: 50%;
     background: var(--card);
@@ -280,7 +282,7 @@
   }
   .bar {
     display: flex;
-    height: 30px;
+    height: 34px;
     border: 2px solid var(--ink);
     border-radius: var(--r-sm);
     background: repeating-linear-gradient(45deg, #e7e2ce 0 5px, #ded8c2 5px 10px);
@@ -303,7 +305,7 @@
   }
   .legend i {
     display: inline-block;
-    width: 11px; height: 11px;
+    width: 15px; height: 15px;
     border: 2px solid var(--ink);
     border-radius: 3px;
     margin-right: 6px;

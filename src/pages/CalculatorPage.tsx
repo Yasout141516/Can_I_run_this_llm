@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { HardwarePanel } from "../features/hardware/HardwarePanel";
-import { Filters } from "../features/results/Filters";
+import { CALCULATOR_SORT_OPTIONS, Filters } from "../features/results/Filters";
 import { ModelList } from "../features/results/ModelList";
 import { ModelTable } from "../features/results/ModelTable";
 import { StatTiles } from "../features/results/StatTiles";
@@ -50,6 +50,7 @@ export function CalculatorPage() {
             query={query}
             categories={categories}
             sortKey={sortKey}
+            sortOptions={CALCULATOR_SORT_OPTIONS}
             view={view}
             onQuery={setQuery}
             onToggleCategory={(c) =>

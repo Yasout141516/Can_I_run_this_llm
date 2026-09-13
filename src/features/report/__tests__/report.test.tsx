@@ -66,12 +66,28 @@ describe("ModelReport", () => {
     at("nobody/not-a-model");
     expect(screen.getByText(/not tracked/i)).toBeInTheDocument();
   });
+
+  it("goes back to the calculator, not to the welcome page", () => {
+    at("meta-llama/Llama-3.1-8B-Instruct");
+    expect(screen.getByRole("link", { name: /back to all models/i })).toHaveAttribute(
+      "href",
+      "/calculator",
+    );
+  });
+
+  it("sends an unknown model back to the calculator too", () => {
+    at("nobody/not-a-model");
+    expect(screen.getByRole("link", { name: /back to the calculator/i })).toHaveAttribute(
+      "href",
+      "/calculator",
+    );
+  });
 });
 
 describe("ModelReport reads the hardware shared with the calculator", () => {
   it("reflects a VRAM change made on the calculator, rather than a fresh default", async () => {
     render(
-      <MemoryRouter initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/calculator"]}>
         <App />
       </MemoryRouter>,
     );

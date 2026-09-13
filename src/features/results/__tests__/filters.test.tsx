@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { GB } from "../../../lib/compat";
 import { loadModels } from "../../../lib/data/load";
 import { scoreModels } from "../useVerdicts";
-import { applyFilters, sortRows } from "../sort";
+import { applyFilters, matchesModel, sortModels, sortRows } from "../sort";
 import { ModelTable } from "../ModelTable";
 import { REFERENCE_HW, REFERENCE_SETTINGS, TINY_HW } from "./fixtures";
 
@@ -98,5 +98,57 @@ describe("ModelTable", () => {
     );
     expect(screen.getByText(/nothing here fits this machine/i)).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+});
+
+describe("matchesModel", () => {
+  const models = loadModels();
+
+  it("is the predicate applyFilters is built from, so the two lists cannot drift", () => {
+    // Browse has no verdicts and so cannot use applyFilters, which takes
+    // ScoredModel[]. Both must agree on what "matches" means.
+    const direct = models.filter((m) => matchesModel(m, { query: "llama", categories: [] }));
+    const scored = applyFilters(rows, { query: "llama", categories: [] });
+    expect(direct.map((m) => m.id)).toEqual(scored.map((r) => r.model.id));
+  });
+
+  it("requires the query and the category to both hold", () => {
+    const llama = models.find((m) => m.displayName.includes("Llama 3.1 8B"))!;
+    expect(matchesModel(llama, { query: "llama", categories: ["chat"] })).toBe(
+      llama.categories.includes("chat"),
+    );
+    expect(matchesModel(llama, { query: "qwen", categories: ["chat"] })).toBe(false);
+  });
+});
+
+describe("sortModels", () => {
+  const models = loadModels();
+
+  it("sorts by name without needing a verdict", () => {
+    const names = sortModels(models, "name").map((m) => m.displayName);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it("sorts by parameter count, largest first", () => {
+    const params = sortModels(models, "params").map((m) => m.params.total);
+    expect(params).toEqual([...params].sort((a, b) => b - a));
+  });
+
+  it("sorts by max context, longest first", () => {
+    const ctx = sortModels(models, "context").map((m) => m.arch.maxContext);
+    expect(ctx).toEqual([...ctx].sort((a, b) => b - a));
+  });
+
+  it("sorts by the smallest quant on offer, which is a data fact and not a verdict", () => {
+    const sizes = sortModels(models, "size").map((m) =>
+      Math.min(...m.quants.map((q) => q.sizeBytes)),
+    );
+    expect(sizes).toEqual([...sizes].sort((a, b) => a - b));
+  });
+
+  it("leaves the caller's array alone", () => {
+    const before = models.map((m) => m.id);
+    sortModels(models, "name");
+    expect(models.map((m) => m.id)).toEqual(before);
   });
 });
