@@ -21,11 +21,22 @@ export interface HfModelInfo {
  *  reports undefined and every quantisation falls back to an estimate. */
 export async function fetchModelInfo(repo: string): Promise<HfModelInfo> {
   const raw = (await getJson(`${API}/${repo}?blobs=true`, repo)) as Partial<HfModelInfo>;
+
+  // Validate id is present and a string
+  if (typeof raw.id !== "string") {
+    throw new IngestError(`${repo}: id is missing or not a string`);
+  }
+
+  // Validate siblings is an array
+  if (!Array.isArray(raw.siblings)) {
+    throw new IngestError(`${repo}: siblings is not an array`);
+  }
+
   return {
-    id: raw.id ?? repo,
+    id: raw.id,
     gated: raw.gated ?? false,
     safetensors: raw.safetensors,
-    siblings: raw.siblings ?? [],
+    siblings: raw.siblings,
   };
 }
 
