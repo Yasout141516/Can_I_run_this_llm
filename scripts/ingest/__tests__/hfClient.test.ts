@@ -5,14 +5,14 @@ import { IngestError, fetchConfigJson, fetchModelInfo } from "../hfClient";
 afterEach(() => vi.unstubAllGlobals());
 
 const ok = (body: unknown) =>
-  vi.fn(async () => new Response(JSON.stringify(body), { status: 200 }));
+  vi.fn(async (_url: string) => new Response(JSON.stringify(body), { status: 200 }));
 
 describe("fetchModelInfo", () => {
   it("asks for blobs, because file sizes are absent without them", async () => {
     const fetchMock = ok({ id: "x/y", gated: false, siblings: [] });
     vi.stubGlobal("fetch", fetchMock);
     await fetchModelInfo("x/y");
-    expect((fetchMock.mock.calls as unknown[][])[0]![0]).toBe("https://huggingface.co/api/models/x/y?blobs=true");
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://huggingface.co/api/models/x/y?blobs=true");
   });
 
   it("names the repo and status when the API refuses", async () => {
@@ -45,7 +45,7 @@ describe("fetchConfigJson", () => {
     const fetchMock = ok({ num_hidden_layers: 32 });
     vi.stubGlobal("fetch", fetchMock);
     await expect(fetchConfigJson("a/b")).resolves.toEqual({ num_hidden_layers: 32 });
-    expect((fetchMock.mock.calls as unknown[][])[0]![0]).toBe("https://huggingface.co/a/b/resolve/main/config.json");
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://huggingface.co/a/b/resolve/main/config.json");
   });
 
   it("fails loudly on a gated 401 rather than returning an empty object", async () => {
