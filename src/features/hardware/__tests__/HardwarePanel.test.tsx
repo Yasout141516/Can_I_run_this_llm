@@ -34,6 +34,31 @@ describe("HardwarePanel", () => {
     expect(screen.getByTestId("vram")).toHaveTextContent("24000000000");
   });
 
+  it("keeps a decimal VRAM value on screen instead of collapsing it to a whole number", async () => {
+    render(<Harness />);
+    const vram = screen.getByLabelText(/^vram/i);
+    await userEvent.clear(vram);
+    await userEvent.type(vram, "4.05");
+    // Not "405": a naive guard would let "4." commit as 4, and resyncing
+    // the display to a rounded echo of that would make the next digit land
+    // after a value that had already snapped back to a whole number.
+    expect(vram).toHaveValue(4.05);
+    expect(screen.getByTestId("vram")).toHaveTextContent("4050000000");
+  });
+
+  it("keeps a rounding-boundary decimal like 4.5 on screen without snapping to a rounded whole number", async () => {
+    // The deeper version of the same bug: rounding the domain value for
+    // display (the old `Math.round(bytes / GB)`) makes 4.5 indistinguishable
+    // from "whatever rounds to 4 or 5", so the resync effect would clobber
+    // the draft with the rounded figure the instant 4.5 committed.
+    render(<Harness />);
+    const vram = screen.getByLabelText(/^vram/i);
+    await userEvent.clear(vram);
+    await userEvent.type(vram, "4.5");
+    expect(vram).toHaveValue(4.5);
+    expect(screen.getByTestId("vram")).toHaveTextContent("4500000000");
+  });
+
   it("changes the engine", async () => {
     render(<Harness />);
     await userEvent.selectOptions(screen.getByLabelText(/inference engine/i), "vllm");

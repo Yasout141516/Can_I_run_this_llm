@@ -34,24 +34,46 @@ const KIND_OPTIONS: { value: HardwareKind; label: string }[] = [
  * clearing the field to retype silently reverts and the next digit lands on
  * the stale number instead of a fresh one. This hook keeps its own draft text
  * in sync with whatever is on screen and only forwards a value upstream once
- * it parses to a real number — a blank field or malformed text ("1e") is
- * left uncommitted rather than coerced to 0 or NaN, which would otherwise
- * flip every model to a "Won't run" verdict whose reason has nothing to do
- * with what the user actually typed.
+ * it parses to a real, complete number:
+ *  - a blank field is left uncommitted rather than coerced to 0
+ *  - malformed text ("abc") is left uncommitted rather than written as NaN
+ *  - a still-incomplete number ("4.", a lone "-") parses fine today
+ *    (`Number("4.") === 4`) but committing it early buys nothing and, once
+ *    `domainValue` is compared back against the draft below, must not be
+ *    treated as if the user were done typing
+ * either of which would otherwise flip every model to a "Won't run" verdict
+ * whose reason has nothing to do with what the user actually typed.
+ *
+ * The resync effect only overwrites the draft when `domainValue` changed for
+ * a reason OTHER than this field's own last commit (a preset, a lookup,
+ * another control): it compares the incoming value against what the current
+ * draft already parses to, not against some rounded display form of it. A
+ * naive "always resync to the rounded display value" would clobber an
+ * in-progress decimal — typing "4.5" would commit 4.5 correctly but then get
+ * redisplayed as the rounded "5" the moment that render's effect ran.
  */
 function useNumericField(domainValue: number, commit: (n: number) => void) {
   const [text, setText] = useState(() => String(domainValue));
 
-  // Resync when the domain value changes for a reason other than this
-  // field's own typing — a preset, a lookup, another control.
   useEffect(() => {
+    // Deliberately depends only on `domainValue`, not `text`: this should
+    // react to an EXTERNAL change (the domain value moving for some reason
+    // other than what's already on screen), not to every local keystroke —
+    // re-running on every `text` change would re-clobber a field the moment
+    // it goes blank or momentarily invalid while the user is still typing,
+    // which is the exact bug this hook exists to prevent. The comparison
+    // still reads the current `text` via closure, which is always this
+    // render's latest value regardless of the dependency list.
+    const parsed = Number(text);
+    if (!Number.isNaN(parsed) && parsed === domainValue) return;
     setText(String(domainValue));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [domainValue]);
 
   function onChange(e: ChangeEvent<HTMLInputElement>) {
     const raw = e.target.value;
     setText(raw);
-    if (raw.trim() === "") return;
+    if (raw.trim() === "" || raw.endsWith(".") || raw === "-") return;
     const n = Number(raw);
     if (Number.isNaN(n)) return;
     commit(n);
@@ -75,17 +97,18 @@ export function quantOptionsFor(models: ModelSpec[], engineId: EngineId): string
   return [...ids].sort();
 }
 
-/** Inputs are in GB because that is how people read spec sheets. */
-function gbInput(value: number): number {
-  return Math.round(value / GB);
-}
-
 export function HardwarePanel({ form }: { form: ReturnType<typeof useHardwareForm> }) {
   const { hw, settings, setHw, setSettings, applyGpu, applyLaptop } = form;
   const quantIds = useMemo(() => quantOptionsFor(loadModels(), settings.engine), [settings.engine]);
 
-  const vramField = useNumericField(gbInput(hw.vramBytes), (n) => setHw({ vramBytes: n * GB }));
-  const ramField = useNumericField(gbInput(hw.ramBytes), (n) => setHw({ ramBytes: n * GB }));
+  // The exact value in GB, not rounded to a whole number: useNumericField
+  // compares this against the parsed draft to decide whether a change came
+  // from outside (a preset) or is just this field's own commit echoing
+  // back — rounding it here would make a fractional GB (7.5, 4.05, ...)
+  // permanently indistinguishable from its own echo and get redisplayed
+  // rounded mid-keystroke.
+  const vramField = useNumericField(hw.vramBytes / GB, (n) => setHw({ vramBytes: n * GB }));
+  const ramField = useNumericField(hw.ramBytes / GB, (n) => setHw({ ramBytes: n * GB }));
   const ctxField = useNumericField(settings.contextLength, (n) => setSettings({ contextLength: n }));
 
   function changeEngine(engine: EngineId) {
