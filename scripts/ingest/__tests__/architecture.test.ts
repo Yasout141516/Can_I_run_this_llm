@@ -36,4 +36,12 @@ describe("readArchitecture", () => {
   it("rejects a non-integer layer count instead of rounding it", () => {
     expect(() => readArchitecture({ ...LLAMA_31_8B, num_hidden_layers: 31.5 }, "x/y")).toThrow(IngestError);
   });
+
+  it("rejects head_dim when it is null instead of deriving", () => {
+    expect(() => readArchitecture({ ...LLAMA_31_8B, head_dim: null }, "x/y")).toThrow(IngestError);
+  });
+
+  it("rejects head_dim when it is a string instead of deriving", () => {
+    expect(() => readArchitecture({ ...LLAMA_31_8B, head_dim: "128" }, "x/y")).toThrow(IngestError);
+  });
 });

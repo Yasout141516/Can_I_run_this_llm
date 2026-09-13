@@ -22,9 +22,9 @@ export function readArchitecture(config: Record<string, unknown>, repo: string) 
   const maxContext = positiveInt(config, "max_position_embeddings", repo);
 
   const headDim =
-    typeof config.head_dim === "number"
-      ? positiveInt(config, "head_dim", repo)
-      : positiveInt(config, "hidden_size", repo) / positiveInt(config, "num_attention_heads", repo);
+    config.head_dim === undefined
+      ? positiveInt(config, "hidden_size", repo) / positiveInt(config, "num_attention_heads", repo)
+      : positiveInt(config, "head_dim", repo);
 
   if (!Number.isInteger(headDim)) {
     throw new IngestError(`${repo}: derived head_dim ${headDim} is not an integer`);
