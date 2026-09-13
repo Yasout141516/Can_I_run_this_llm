@@ -169,7 +169,12 @@ From the final review of Plan 2. Full detail in the carried-into-plan-3 note.
 4. **No SPA fallback for `BrowserRouter`.** No `vercel.json` / `netlify.toml` / `_redirects`.
    On a plain static host, a direct request to `/model/:id` or `/browse` 404s. **Now four
    deep-linkable routes, so this is worse than when it was written.** Two-line file; flagged
-   and deliberately not fixed without a decision on the host.
+   and deliberately not fixed without a decision on the host. **Deferred on 2026-09-14: the
+   host is undecided.** Vercel wants `vercel.json`, Netlify and Cloudflare Pages want
+   `_redirects`; GitHub Pages supports no rewrites at all and needs either the `404.html`
+   redirect trick or a switch to `HashRouter`, *plus* a Vite `base` and a router `basename`,
+   because a project repo is served from `/<repo>/` and not the domain root. Decide the host
+   before writing the file.
 5. **"Of your VRAM" understates vLLM and SGLang** — the percentage is of full `usableVram`,
    but those engines only get `memoryUtilization` (90%) of it.
 6. **Heading hierarchy is thin** — one `h1`, no `h2`s; model names are links, not headings.
