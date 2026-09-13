@@ -1,5 +1,5 @@
 import { ModelCard } from "./ModelCard";
-import { emptyResultsMessage, ResultsEmptyState } from "./ResultsEmptyState";
+import { emptyResultsMessage } from "./ResultsEmptyState";
 import type { ScoredModel } from "./useVerdicts";
 
 export function ModelList({
@@ -14,9 +14,8 @@ export function ModelList({
    * true statement about the machine when it hasn't been said. */
   filtered: boolean;
 }) {
-  if (emptyResultsMessage(rows, filtered)) {
-    return <ResultsEmptyState rows={rows} filtered={filtered} />;
-  }
+  const empty = emptyResultsMessage(rows, filtered);
+  if (empty) return <p className="empty">{empty}</p>;
 
   return (
     <div className="verdicts">

@@ -16,3 +16,21 @@ export function formatPercent(part: number, whole: number): string {
 export function formatTokens(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+const BILLION = 1e9;
+
+/**
+ * Parameter count as people quote it. Mixture-of-experts models get both
+ * numbers because they diverge in a way that matters: total drives memory
+ * (every expert stays resident), active drives only speed.
+ */
+export function formatParams(params: { total: number; active: number | null }): string {
+  const billions = (n: number, dp: number) => `${(n / BILLION).toFixed(dp)}B`;
+  if (params.active === null) return `${billions(params.total, 1)} dense`;
+  return `${billions(params.total, 0)} total / ${billions(params.active, 0)} active · MoE`;
+}
+
+/** Just the total, for dense columns where the MoE split does not fit. */
+export function formatParamCount(total: number): string {
+  return `${(total / BILLION).toFixed(1)}B`;
+}

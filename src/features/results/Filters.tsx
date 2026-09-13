@@ -1,8 +1,14 @@
 import { Chip } from "../../components/ui/Chip";
+import { Segmented } from "../../components/ui/Segmented";
 import type { Category } from "../../lib/compat";
 import type { SortKey } from "./sort";
 
 const CATEGORIES: Category[] = ["chat", "code", "reasoning", "vision"];
+
+const VIEW_OPTIONS = [
+  { value: "cards" as const, label: "Cards" },
+  { value: "table" as const, label: "Table" },
+];
 
 export function Filters({
   query,
@@ -54,14 +60,12 @@ export function Filters({
         <option value="name">Name</option>
       </select>
 
-      <div className="seg" role="group" aria-label="View">
-        <button type="button" aria-pressed={view === "cards"} onClick={() => onView("cards")}>
-          Cards
-        </button>
-        <button type="button" aria-pressed={view === "table"} onClick={() => onView("table")}>
-          Table
-        </button>
-      </div>
+      <Segmented
+        label="View"
+        options={VIEW_OPTIONS}
+        value={view}
+        onChange={onView}
+      />
     </div>
   );
 }

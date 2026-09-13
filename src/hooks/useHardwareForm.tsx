@@ -19,7 +19,6 @@ const DEFAULT_SETTINGS: Settings = {
 export function useHardwareForm() {
   const [hw, setHwState] = useState<HardwareSpec>(DEFAULT_HW);
   const [settings, setSettingsState] = useState<Settings>(DEFAULT_SETTINGS);
-  const [appliedLaptopId, setAppliedLaptopId] = useState<string | null>(null);
 
   // Patches, not replacements: a lookup prefills these same fields, so both
   // paths write to one place and the last write wins. That is what makes a
@@ -49,7 +48,6 @@ export function useHardwareForm() {
   }, []);
 
   const applyLaptop = useCallback((laptop: LaptopEntry) => {
-    setAppliedLaptopId(laptop.id);
     setHwState((prev) => ({
       ...prev,
       kind: laptop.kind,
@@ -59,7 +57,7 @@ export function useHardwareForm() {
     }));
   }, []);
 
-  return { hw, settings, setHw, setSettings, applyGpu, applyLaptop, appliedLaptopId };
+  return { hw, settings, setHw, setSettings, applyGpu, applyLaptop };
 }
 
 // The calculator page and the per-model report route must see the same

@@ -1,19 +1,15 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import { GB, type HardwareSpec, type Settings } from "../../../lib/compat";
+import { GB, type HardwareSpec } from "../../../lib/compat";
 import { loadModels } from "../../../lib/data/load";
 import { isTightFit, scoreModels } from "../useVerdicts";
 import { ModelList } from "../ModelList";
 import { StatTiles } from "../StatTiles";
+import { REFERENCE_HW, REFERENCE_SETTINGS, TINY_HW } from "./fixtures";
 
-const hw: HardwareSpec = { kind: "discrete-gpu", vramBytes: 12 * GB, ramBytes: 64 * GB };
-const settings: Settings = {
-  engine: "ollama",
-  contextLength: 8192,
-  kvPrecision: "fp16",
-  quantId: "auto",
-};
+const hw = REFERENCE_HW;
+const settings = REFERENCE_SETTINGS;
 const rows = () => scoreModels(loadModels(), hw, settings);
 
 describe("scoreModels", () => {
@@ -95,7 +91,7 @@ describe("ModelList", () => {
   });
 
   it("tells the user when a machine can run nothing, instead of showing a blank list", () => {
-    const tiny: HardwareSpec = { kind: "discrete-gpu", vramBytes: 2 * GB, ramBytes: 4 * GB };
+    const tiny = TINY_HW;
     render(
       <MemoryRouter>
         <ModelList
@@ -113,7 +109,7 @@ describe("ModelList", () => {
     // framed as a search/category match rather than the full catalogue — the
     // machine-level message would overstate what the hardware can do, so the
     // cards should render instead, each with its own accurate verdict.
-    const tiny: HardwareSpec = { kind: "discrete-gpu", vramBytes: 2 * GB, ramBytes: 4 * GB };
+    const tiny = TINY_HW;
     render(
       <MemoryRouter>
         <ModelList

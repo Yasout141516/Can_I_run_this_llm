@@ -26,15 +26,3 @@ export function emptyResultsMessage(rows: ScoredModel[], filtered: boolean): str
 
   return null;
 }
-
-export function ResultsEmptyState({
-  rows,
-  filtered,
-}: {
-  rows: ScoredModel[];
-  filtered: boolean;
-}) {
-  const message = emptyResultsMessage(rows, filtered);
-  if (!message) return null;
-  return <p className="empty">{message}</p>;
-}

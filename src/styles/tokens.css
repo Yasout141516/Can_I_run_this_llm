@@ -2,8 +2,8 @@
   --ground: #55547e;
   --ground-deep: #43426a;
   --card: #fcf9ec;
-  --card-sunk: #f1eddc;
   --ink: #141046;
+  --muted:       #ded9f2;
   --ink-soft: #55507f;
 
   --accent-a: #7c3aed;
@@ -97,28 +97,6 @@ body {
 .badge.estimated { background: transparent; color: var(--ink-soft); border-style: dashed; }
 
 /* ---------- buttons ---------- */
-.btn {
-  font-family: var(--f-display);
-  font-size: 15px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 14px 22px;
-  border: var(--bw) solid var(--ink);
-  border-radius: var(--r-sm);
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  transition: transform 0.07s steps(2), box-shadow 0.07s steps(2);
-}
-.btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink); }
-.btn:focus-visible { outline: 3px solid var(--accent-c); outline-offset: 3px; }
-.btn-primary { background: var(--accent-grad); color: #fff; text-shadow: 0 1px 0 rgba(20, 16, 70, 0.45); }
-.btn-secondary { background: var(--card); color: var(--ink); }
-.btn-ghost { background: transparent; color: var(--card); border-color: var(--card); box-shadow: var(--shadow-sm); }
-.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
-@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
 
 /* ---------- segmented control ---------- */
 .seg {
@@ -299,12 +277,12 @@ body {
 .mast p {
   margin: 10px 0 0;
   max-width: 52ch;
-  color: #ded9f2;
+  color: var(--muted);
 }
 /* .v-arch is styled for use on a cream card (ModelCard); reused here on the
    masthead's dark ground it needs a light colour instead, or ink-soft on
    ink-soft is nearly unreadable. */
-.mast .v-arch { color: #ded9f2; }
+.mast .v-arch { color: var(--muted); }
 .mast-side {
   border: var(--bw) solid var(--ink);
   border-radius: var(--r);

@@ -1,31 +1,41 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "../../components/ui/Badge";
 import { VerdictPill } from "../../components/ui/Pill";
-import { formatGB, formatPercent, formatTokens } from "../../lib/ui/format";
-import { isTightFit, type ScoredModel } from "./useVerdicts";
+import { TightFitBadge } from "../../components/ui/TightFitBadge";
+import { WhyNote } from "../../components/ui/WhyNote";
+import { formatGB, formatParams, formatPercent, formatTokens } from "../../lib/ui/format";
+import { modelPath } from "../../lib/ui/paths";
+import type { ScoredModel } from "./useVerdicts";
 
-export function ModelCard({ row, vramBytes }: { row: ScoredModel; vramBytes: number }) {
+/**
+ * Memoised: filtering and sorting reorder and drop ScoredModel references but
+ * never clone them, so a keystroke in the search box leaves every surviving
+ * row's props referentially identical. At a few hundred models that is the
+ * difference between re-rendering the whole list per character and re-rendering
+ * none of it.
+ */
+export const ModelCard = memo(function ModelCard({
+  row,
+  vramBytes,
+}: {
+  row: ScoredModel;
+  vramBytes: number;
+}) {
   const { model, verdict } = row;
-  const moe = model.params.active !== null;
 
   return (
     <article className="verdict card" data-testid={`card-${model.id}`}>
       <div className="v-top">
-        <Link className="v-name" to={`/model/${encodeURIComponent(model.id)}`}>
+        <Link className="v-name" to={modelPath(model)}>
           {model.displayName}
         </Link>
         <span className="v-arch">
-          {moe
-            ? `${(model.params.total / 1e9).toFixed(0)}B total / ${(model.params.active! / 1e9).toFixed(0)}B active · MoE`
-            : `${(model.params.total / 1e9).toFixed(1)}B dense`}{" "}
-          · {model.arch.numLayers}L · {model.arch.numKvHeads} KV heads
+          {formatParams(model.params)} · {model.arch.numLayers}L ·{" "}
+          {model.arch.numKvHeads} KV heads
         </span>
         <span className="v-spacer" />
-        {isTightFit(verdict, vramBytes) ? (
-          <span className="badge tight" title="Fits, but with almost no headroom left">
-            Tight fit
-          </span>
-        ) : null}
+        <TightFitBadge verdict={verdict} vramBytes={vramBytes} />
         <Badge source={verdict.confidence} />
         <VerdictPill status={verdict.status} />
       </div>
@@ -41,12 +51,8 @@ export function ModelCard({ row, vramBytes }: { row: ScoredModel; vramBytes: num
             <b>{formatPercent(verdict.breakdown.totalBytes, vramBytes)}</b>
           </span>
         </div>
-        {verdict.notes[0] ? (
-          <p className="why">
-            <b>Why</b> <span>{verdict.notes[0]}</span>
-          </p>
-        ) : null}
+        <WhyNote note={verdict.notes[0]} />
       </div>
     </article>
   );
-}
+});

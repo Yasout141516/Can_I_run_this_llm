@@ -38,7 +38,7 @@ export function ModelReport() {
     <main className="wrap">
       <Link className="label" to="/">← Back to all models</Link>
 
-      <header className="mast" data-testid="report-masthead">
+      <header className="mast" data-testid="report-masthead" aria-label="Model summary">
         <div>
           <h1>{model.displayName}</h1>
           <p className="v-arch">
@@ -52,7 +52,7 @@ export function ModelReport() {
         </div>
       </header>
 
-      <section className="panel" data-testid="memory-panel">
+      <section className="panel" data-testid="memory-panel" aria-label="Memory usage">
         <MemoryBar verdict={verdict} vramBytes={vram} />
         {verdict.notes[0] ? (
           <p className="why">

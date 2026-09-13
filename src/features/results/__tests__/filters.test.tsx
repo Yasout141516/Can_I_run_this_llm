@@ -1,14 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import { GB, type HardwareSpec, type Settings } from "../../../lib/compat";
+import { GB } from "../../../lib/compat";
 import { loadModels } from "../../../lib/data/load";
 import { scoreModels } from "../useVerdicts";
 import { applyFilters, sortRows } from "../sort";
 import { ModelTable } from "../ModelTable";
+import { REFERENCE_HW, REFERENCE_SETTINGS, TINY_HW } from "./fixtures";
 
-const hw: HardwareSpec = { kind: "discrete-gpu", vramBytes: 12 * GB, ramBytes: 64 * GB };
-const settings: Settings = { engine: "ollama", contextLength: 8192, kvPrecision: "fp16", quantId: "auto" };
+const hw = REFERENCE_HW;
+const settings = REFERENCE_SETTINGS;
 const rows = scoreModels(loadModels(), hw, settings);
 
 describe("applyFilters", () => {
@@ -85,7 +86,7 @@ describe("ModelTable", () => {
   });
 
   it("shows the same 'nothing fits this machine' message, unfiltered, when every model won't run", () => {
-    const tiny: HardwareSpec = { kind: "discrete-gpu", vramBytes: 2 * GB, ramBytes: 4 * GB };
+    const tiny = TINY_HW;
     render(
       <MemoryRouter>
         <ModelTable
