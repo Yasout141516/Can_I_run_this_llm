@@ -5,6 +5,7 @@ const ITEMS = [
   // of the index route and lights Home up everywhere.
   { to: "/", label: "Home", end: true },
   { to: "/browse", label: "Browse LLMs", end: false },
+  { to: "/benchmarks", label: "Benchmarks", end: false },
   { to: "/calculator", label: "Check my hardware", end: false },
 ];
 

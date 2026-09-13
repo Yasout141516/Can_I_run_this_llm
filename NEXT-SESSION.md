@@ -23,10 +23,11 @@ Approved visual design: [`docs/design/style-reference.html`](docs/design/style-r
 | 2 — Calculator UI & model report | **Merged.** `/calculator`, `/model/:id` report. |
 | Welcome page + box-sizing fix | **Done this session**, see below. |
 | Nav bar, Browse page, home best-fits | **Done this session**, see below. |
+| Benchmarks page + curated scores | **Done this session**, see below. |
 | 3 — Ingestion pipeline + GitHub Actions cron | Not started. Only 3 seed models ship today. |
 | 4 — Benchmarks page, `/detect`, coach-mark tour | Not started. |
 
-`main` is green: **201 tests across 22 files**, `npm run build` clean. `npm run dev` serves on
+`main` is green: **212 tests across 23 files**, `npm run build` clean. `npm run dev` serves on
 http://localhost:5173.
 
 ## What this session did
@@ -106,6 +107,39 @@ than weakened. Home shows the six best fits via the existing `ModelCard`, ordere
 `change →` into the calculator. **It is the fix for known gap 3** — drop it into `ModelReport`
 and a deep-linked report stops saying "of your VRAM" about hardware the recipient never set.
 
+### 4. Benchmarks page — done
+
+`/benchmarks`: a sortable, filterable scores table, a column per `BenchmarkId`, plus a glossary
+saying what each benchmark actually tests. Approved shape was the spec's table (§8) rather than
+the leaderboard-card layout of the `llmrun.dev/benchmark` reference the user pointed at — that
+site ranks the whole model world, while Runcheck can only rank its own catalogue.
+
+**The data was curated first, by hand, from vendor model cards** — the spec forbids scraping
+(§6) and the previous state of `config/benchmarks.json` was two MMLU numbers. Now:
+
+- **Llama 3.1 8B Instruct** and **Llama 3.3 70B Instruct** — six of seven benchmarks each, from
+  Meta's own instruction-tuned evaluation tables, with shot settings and metrics recorded in
+  `_source`. Neither card reports SWE-bench.
+- **Qwen3 235B A22B** — all seven left `null`. Its model card carries no evaluation table at
+  all, and the Qwen3 blog publishes its numbers as chart images. A rendered-page fetch did
+  return "MMLU-Pro 68.18 / SWE-bench Pro 21.41", but those came from a leaderboard widget
+  embedded in the HF page rather than from Qwen, and were discarded rather than recorded.
+  **Do not fill this row without a citable text source.**
+
+`data/models.json` was updated by merging `config/benchmarks.json` by hand, because the
+ingestion job that is supposed to do that (Plan 3 step 4) does not exist yet. **When Plan 3
+lands, that merge becomes the job's responsibility and this hand-merge stops being the path.**
+
+Two honesty rules are encoded in tests: an unreported score renders as an em dash and never a
+zero ("did not report" ≠ "scored nothing"), and a model with no score sorts last under every
+ranking regardless of direction.
+
+**Per-model provenance is not shown.** `_source` lives in `config/benchmarks.json`, which the
+app never loads — `ModelSpec` has no field for it, so the page carries one general note saying
+scores come from vendors' own cards under their own harnesses. Putting real per-score
+attribution on screen means adding a field at ingestion time, the same call as `license` and
+`releasedAt`.
+
 ## Architecture, in one screen
 
 ```
@@ -123,10 +157,11 @@ src/components/ui/        Badge, Button, Chip, Field, HelpDot, Pill, Segmented,
 src/hooks/                useHardwareForm (+ HardwareProvider)
 src/features/hardware/    HardwarePanel, DeviceLookup, HardwareSummary
 src/features/browse/      CatalogTable
+src/features/benchmarks/  benchmarkMeta (labels, blurbs, ranking), ScoreTable
 src/features/results/     useVerdicts, StatTiles, Filters, ModelList,
                           ModelCard, ModelTable, sort, ResultsEmptyState
 src/features/report/      ModelReport, MemoryBar, QuantTable, RunItBlock
-src/pages/                WelcomePage, CalculatorPage, BrowsePage
+src/pages/                WelcomePage, CalculatorPage, BrowsePage, BenchmarksPage
 ```
 
 ## Rules that are settled — do not relitigate without a reason
@@ -160,9 +195,9 @@ From the final review of Plan 2. Full detail in the carried-into-plan-3 note.
    before computing" from `totalBytes === 0` — shape-inference the engine should state
    outright (`breakdown: Breakdown | null`). Every new early-return guard in `evaluate()` must
    currently remember to zero the breakdown for this to keep working. **Do this in Plan 3.**
-2. **Benchmark scores still render nowhere** — not on the report (spec §8 lists them), not on
-   Browse, though the data is populated and validated. Browse is their natural home; it was
-   left out of that page's scope deliberately rather than widened without asking.
+2. **The report still shows no benchmark scores**, though spec §8 lists them among its
+   contents. `/benchmarks` now renders them and `ModelSpec.benchmarks` is populated, so this is
+   a small addition to `ModelReport` rather than new work.
 3. **A deep-linked report has no hardware summary** — `/model/:id` says "of your VRAM" while
    scoring against the recipient's defaults, with nothing saying so. `HardwareSummary` now
    exists and solves exactly this; it just has not been added to the report.

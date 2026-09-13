@@ -1,7 +1,35 @@
 {
+  "_note": "Hand-curated, never scraped (spec §6). Every score is copied from the vendor's own model card, which means a row is measured under that vendor's harness and shot settings. Scores are comparable down a column with care and across vendors only loosely — which is why _source is recorded per model and shown on the page.",
   "scores": {
-    "meta-llama/Llama-3.1-8B-Instruct": { "mmlu": 69.4, "_source": "Meta Llama 3.1 model card" },
-    "meta-llama/Llama-3.3-70B-Instruct": { "mmlu": 86.0, "_source": "Meta Llama 3.3 model card" },
-    "Qwen/Qwen3-235B-A22B": { "mmlu": null, "_source": "not reported" }
+    "meta-llama/Llama-3.1-8B-Instruct": {
+      "mmlu": 69.4,
+      "mmlu_pro": 48.3,
+      "gpqa": 30.4,
+      "humaneval": 72.6,
+      "math": 51.9,
+      "ifeval": 80.4,
+      "swe_bench": null,
+      "_source": "Meta Llama 3.1 model card, instruction-tuned evaluation table (MMLU 5-shot macro_avg/acc; MMLU-Pro 5-shot; GPQA 0-shot em; HumanEval pass@1; MATH 0-shot CoT). SWE-bench is not reported there."
+    },
+    "meta-llama/Llama-3.3-70B-Instruct": {
+      "mmlu": 86.0,
+      "mmlu_pro": 68.9,
+      "gpqa": 50.5,
+      "humaneval": 88.4,
+      "math": 77.0,
+      "ifeval": 92.1,
+      "swe_bench": null,
+      "_source": "Meta Llama 3.3 model card, instruction-tuned evaluation table (MMLU 0-shot CoT; MMLU-Pro 5-shot CoT; GPQA Diamond 0-shot CoT; HumanEval pass@1; MATH 0-shot CoT). SWE-bench is not reported there."
+    },
+    "Qwen/Qwen3-235B-A22B": {
+      "mmlu": null,
+      "mmlu_pro": null,
+      "gpqa": null,
+      "humaneval": null,
+      "math": null,
+      "ifeval": null,
+      "swe_bench": null,
+      "_source": "Not reported. The Qwen3-235B-A22B model card carries no evaluation table, and the Qwen3 blog publishes its numbers as chart images rather than text — nothing citable without transcribing a picture. Left null rather than guessed."
+    }
   }
 }

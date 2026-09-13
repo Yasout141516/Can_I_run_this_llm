@@ -15,7 +15,7 @@ describe("Nav", () => {
     at("/");
     const nav = screen.getByRole("navigation", { name: /main/i });
     expect(nav).toBeInTheDocument();
-    for (const name of ["Home", "Browse LLMs", "Check my hardware"]) {
+    for (const name of ["Home", "Browse LLMs", "Benchmarks", "Check my hardware"]) {
       expect(screen.getByRole("link", { name })).toBeInTheDocument();
     }
   });

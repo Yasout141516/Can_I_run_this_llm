@@ -26,13 +26,24 @@ describe("App routes", () => {
     expect(screen.getByTestId("tile-run-on-gpu")).toBeInTheDocument();
   });
 
-  it.each(["/", "/calculator", "/browse", "/model/meta-llama%2FLlama-3.1-8B-Instruct"])(
+  it.each([
+    "/",
+    "/calculator",
+    "/browse",
+    "/benchmarks",
+    "/model/meta-llama%2FLlama-3.1-8B-Instruct",
+  ])(
     "carries the nav on %s",
     (path) => {
       at(path);
       expect(screen.getByRole("navigation", { name: /main/i })).toBeInTheDocument();
     },
   );
+
+  it("serves the benchmarks table at /benchmarks", () => {
+    at("/benchmarks");
+    expect(screen.getByRole("region", { name: /benchmark scores/i })).toBeInTheDocument();
+  });
 
   it("still serves a model report at /model/:id", () => {
     at("/model/meta-llama%2FLlama-3.1-8B-Instruct");

@@ -479,3 +479,17 @@ body {
 .hw-summary .label { color: var(--accent-c); }
 .hw-summary a { color: var(--card); }
 .more-link { color: var(--accent-c); align-self: flex-start; }
+
+/* ---------- benchmarks glossary ---------- */
+.glossary dl { margin: 0; display: grid; gap: 14px; }
+.glossary dt {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.glossary dd { margin: 2px 0 0; color: var(--ink-soft); font-size: 13.5px; }
+.results > .why { color: var(--muted); }
+.results > .why b { color: var(--card); }
