@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { evaluate } from "../evaluate";
 import { GB } from "../memory";
 import { llama8b, llama70b, qwen235bMoe, rtx4070 } from "./fixtures";
+import { APPLE_HW, REFERENCE_HW, REFERENCE_SETTINGS } from "../../../features/results/__tests__/fixtures";
 import type { HardwareSpec, ModelSpec, Settings } from "../types";
 
 const ollama8k: Settings = {
@@ -19,10 +20,10 @@ describe("evaluate — run on GPU", () => {
   });
 
   it("breaks the total down exactly", () => {
-    expect(v.breakdown.weightsBytes).toBe(4_920_734_208);
-    expect(v.breakdown.kvCacheBytes).toBe(1_073_741_824);
-    expect(v.breakdown.overheadBytes).toBe(597_456_000);
-    expect(v.breakdown.totalBytes).toBe(6_591_932_032);
+    expect(v.breakdown!.weightsBytes).toBe(4_920_734_208);
+    expect(v.breakdown!.kvCacheBytes).toBe(1_073_741_824);
+    expect(v.breakdown!.overheadBytes).toBe(597_456_000);
+    expect(v.breakdown!.totalBytes).toBe(6_591_932_032);
   });
 
   it("reports measured confidence when the size came from a real file", () => {
@@ -35,7 +36,7 @@ describe("evaluate — CPU offloaded", () => {
 
   it("offloads a 70B that does not fit VRAM but fits VRAM + usable RAM", () => {
     expect(v.status).toBe("cpu-offloaded");
-    expect(v.breakdown.totalBytes).toBe(45_781_810_560);
+    expect(v.breakdown!.totalBytes).toBe(45_781_810_560);
   });
 
   it("reports the layer split that --n-gpu-layers needs", () => {
@@ -56,7 +57,7 @@ describe("evaluate — won't run", () => {
   });
 
   it("charges MoE memory at total params, not active", () => {
-    expect(v.breakdown.weightsBytes / GB).toBeCloseTo(141, 0);
+    expect(v.breakdown!.weightsBytes / GB).toBeCloseTo(141, 0);
   });
 
   it("reports estimated confidence when no real file exists", () => {
@@ -196,20 +197,37 @@ describe("evaluate — a too-long context still shows its arithmetic", () => {
   });
 
   it("reports the weights it would have needed", () => {
-    expect(v.breakdown.weightsBytes).toBe(4_920_734_208);
+    expect(v.breakdown!.weightsBytes).toBe(4_920_734_208);
     expect(v.quantId).toBe("Q4_K_M");
   });
 
   it("reports the KV cache at the REQUESTED context, which is the whole point", () => {
     // 2 * 32 * 8 * 128 * 200000 * 2
-    expect(v.breakdown.kvCacheBytes).toBe(26_214_400_000);
-    expect(v.breakdown.totalBytes).toBeGreaterThan(v.breakdown.kvCacheBytes);
+    expect(v.breakdown!.kvCacheBytes).toBe(26_214_400_000);
+    expect(v.breakdown!.totalBytes).toBeGreaterThan(v.breakdown!.kvCacheBytes);
   });
 
-  it("leaves the nonsense-context guard returning an empty breakdown", () => {
+  it("leaves the nonsense-context guard returning a null breakdown", () => {
     // -1 tokens has no meaningful arithmetic to show.
     const bad = evaluate(llama8b, rtx4070, { ...ollama8k, contextLength: -1 });
-    expect(bad.breakdown.totalBytes).toBe(0);
+    expect(bad.breakdown).toBeNull();
     expect(bad.limitingFactor).toBe("context");
+  });
+});
+
+describe("evaluate — breakdown presence", () => {
+  it("returns a null breakdown when it never computed one", () => {
+    // vLLM cannot run on Apple Silicon: the engine guard returns before any
+    // memory arithmetic happens. "No breakdown" is a fact the verdict should
+    // state, not something the UI infers from an all-zero object.
+    const verdict = evaluate(llama8b, APPLE_HW, { ...REFERENCE_SETTINGS, engine: "vllm" });
+    expect(verdict.status).toBe("wont-run");
+    expect(verdict.breakdown).toBeNull();
+  });
+
+  it("still returns a breakdown when it did the arithmetic", () => {
+    const verdict = evaluate(llama8b, REFERENCE_HW, REFERENCE_SETTINGS);
+    expect(verdict.breakdown).not.toBeNull();
+    expect(verdict.breakdown!.totalBytes).toBe(6_591_932_032);
   });
 });

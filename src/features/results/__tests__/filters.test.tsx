@@ -39,7 +39,10 @@ describe("sortRows", () => {
 
   it("sorts by memory need ascending", () => {
     const sorted = sortRows(rows, "size");
-    const totals = sorted.map((r) => r.verdict.breakdown.totalBytes);
+    // A null breakdown has no size to sort by, so it is treated as Infinity —
+    // matching sortRows itself, and keeping this array's numbers real for the
+    // ascending-order check below.
+    const totals = sorted.map((r) => r.verdict.breakdown?.totalBytes ?? Infinity);
     expect([...totals].sort((a, b) => a - b)).toEqual(totals);
   });
 

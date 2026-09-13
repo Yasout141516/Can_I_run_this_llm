@@ -37,6 +37,6 @@ export function useVerdicts(
 export const TIGHT_FIT_FRACTION = 0.9;
 
 export function isTightFit(verdict: Verdict, vramBytes: number): boolean {
-  if (verdict.status !== "run-on-gpu" || vramBytes <= 0) return false;
+  if (verdict.status !== "run-on-gpu" || vramBytes <= 0 || verdict.breakdown === null) return false;
   return verdict.breakdown.totalBytes > vramBytes * TIGHT_FIT_FRACTION;
 }

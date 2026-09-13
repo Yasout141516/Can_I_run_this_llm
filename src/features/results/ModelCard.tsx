@@ -46,9 +46,11 @@ export const ModelCard = memo(function ModelCard({
             {formatTokens(model.arch.maxContext)} tokens
           </span>
           <span>
-            <b>{formatGB(verdict.breakdown.totalBytes)}</b>
+            <b>{verdict.breakdown === null ? "—" : formatGB(verdict.breakdown.totalBytes)}</b>
             {" · "}
-            <b>{formatPercent(verdict.breakdown.totalBytes, vramBytes)}</b>
+            <b>
+              {verdict.breakdown === null ? "—" : formatPercent(verdict.breakdown.totalBytes, vramBytes)}
+            </b>
           </span>
         </div>
         <WhyNote note={verdict.notes[0]} />

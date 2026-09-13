@@ -7,6 +7,14 @@ import type { Verdict } from "../../lib/compat";
  * otherwise the bar would overflow its own container.
  */
 export function MemoryBar({ verdict, vramBytes }: { verdict: Verdict; vramBytes: number }) {
+  if (verdict.breakdown === null) {
+    // A guard rejected this configuration before any memory arithmetic ran
+    // (e.g. wrong engine for this hardware, or an unloadable format) — there
+    // is no real weights/KV/overhead split to draw, so drawing a bar of
+    // zeros would misstate that as "needs nothing" rather than "unevaluated".
+    return <p className="empty" data-testid="memory-bar-empty">No memory breakdown for this configuration.</p>;
+  }
+
   const { weightsBytes, kvCacheBytes, overheadBytes, totalBytes } = verdict.breakdown;
   const scale = Math.max(vramBytes, totalBytes);
   const pct = (n: number) => `${(n / scale) * 100}%`;

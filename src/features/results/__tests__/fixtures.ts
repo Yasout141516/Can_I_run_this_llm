@@ -20,3 +20,10 @@ export const TINY_HW: HardwareSpec = {
   vramBytes: 2 * GB,
   ramBytes: 4 * GB,
 };
+
+export const APPLE_HW: HardwareSpec = {
+  kind: "apple-silicon",
+  vramBytes: 24 * GB,
+  ramBytes: 24 * GB,
+  ramType: "unified",
+};

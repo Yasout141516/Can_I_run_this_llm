@@ -47,7 +47,7 @@ export function selectQuant(model: ModelSpec, settings: Settings): QuantOption |
 function wontRun(reason: LimitingFactor, note: string): Verdict {
   return {
     status: "wont-run",
-    breakdown: { weightsBytes: 0, kvCacheBytes: 0, overheadBytes: 0, totalBytes: 0 },
+    breakdown: null,
     confidence: "estimated",
     quantId: null,
     limitingFactor: reason,

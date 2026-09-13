@@ -58,11 +58,14 @@ export function sortModels(models: ModelSpec[], key: ModelSortKey): ModelSpec[] 
   }
 }
 
+/** A model the engine could not evaluate has no size to sort by, so it sorts last. */
+const totalOf = (r: ScoredModel) => r.verdict.breakdown?.totalBytes ?? Infinity;
+
 export function sortRows(rows: ScoredModel[], key: SortKey): ScoredModel[] {
   const copy = [...rows];
   switch (key) {
     case "size":
-      return copy.sort((a, b) => a.verdict.breakdown.totalBytes - b.verdict.breakdown.totalBytes);
+      return copy.sort((a, b) => totalOf(a) - totalOf(b));
     case "name":
       return copy.sort((a, b) => a.model.displayName.localeCompare(b.model.displayName));
     case "params":
@@ -70,9 +73,7 @@ export function sortRows(rows: ScoredModel[], key: SortKey): ScoredModel[] {
     case "compatibility":
     default:
       return copy.sort(
-        (a, b) =>
-          STATUS_RANK[a.verdict.status] - STATUS_RANK[b.verdict.status] ||
-          a.verdict.breakdown.totalBytes - b.verdict.breakdown.totalBytes,
+        (a, b) => STATUS_RANK[a.verdict.status] - STATUS_RANK[b.verdict.status] || totalOf(a) - totalOf(b),
       );
   }
 }

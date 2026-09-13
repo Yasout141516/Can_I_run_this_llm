@@ -56,14 +56,17 @@ export interface Settings {
 export type VerdictStatus = "run-on-gpu" | "cpu-offloaded" | "wont-run";
 export type LimitingFactor = "vram" | "ram" | "context" | "format" | "engine";
 
+export interface Breakdown {
+  weightsBytes: number;
+  kvCacheBytes: number;
+  overheadBytes: number;
+  totalBytes: number;
+}
+
 export interface Verdict {
   status: VerdictStatus;
-  breakdown: {
-    weightsBytes: number;
-    kvCacheBytes: number;
-    overheadBytes: number;
-    totalBytes: number;
-  };
+  /** Null when a guard rejected the model before any memory arithmetic ran. */
+  breakdown: Breakdown | null;
   confidence: "measured" | "estimated";
   quantId: string | null;
   gpuLayers?: number;

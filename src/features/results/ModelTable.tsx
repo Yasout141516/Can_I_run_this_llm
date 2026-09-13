@@ -29,10 +29,12 @@ const ModelTableRow = memo(function ModelTableRow({
         <span>{verdict.quantId ?? "—"}</span>
       </td>
       <td>
-        <span>{formatGB(verdict.breakdown.totalBytes)}</span>
+        <span>{verdict.breakdown === null ? "—" : formatGB(verdict.breakdown.totalBytes)}</span>
       </td>
       <td>
-        <span>{formatPercent(verdict.breakdown.totalBytes, vramBytes)}</span>
+        <span>
+          {verdict.breakdown === null ? "—" : formatPercent(verdict.breakdown.totalBytes, vramBytes)}
+        </span>
       </td>
       <td>
         <Badge source={verdict.confidence} />
