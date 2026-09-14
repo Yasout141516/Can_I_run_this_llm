@@ -17,3 +17,18 @@ export function mergePreservingTimestamps(next: ModelSpec[], previous: ModelSpec
     return { ...m, source: { ...m.source, fetchedAt: old.source.fetchedAt } };
   });
 }
+
+/**
+ * True when `existing` (read from disk) and `serialised` (freshly built)
+ * hold the same content, modulo line-ending style. `JSON.stringify` always
+ * emits bare `\n`, but a Windows checkout with `core.autocrlf=true` — a
+ * common global git setting — rewrites LF to CRLF on checkout. A raw byte
+ * comparison would then see every line as different and rewrite
+ * data/models.json on every run even when nothing changed, reintroducing
+ * exactly the timestamp-churn problem `mergePreservingTimestamps` exists to
+ * prevent. Only `existing` needs normalising: `serialised` is always
+ * produced by this codebase and is always bare `\n`.
+ */
+export function isUnchanged(existing: string, serialised: string): boolean {
+  return existing.replace(/\r\n/g, "\n") === serialised;
+}

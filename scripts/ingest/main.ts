@@ -5,7 +5,7 @@ import familiesJson from "../../config/families.json";
 import type { BenchmarkId, ModelSpec } from "../../src/lib/compat/types";
 import { SCHEMA_VERSION, familiesFileSchema, modelsFileSchema } from "../../src/lib/data/schema";
 import { assembleModel } from "./assemble";
-import { mergePreservingTimestamps } from "./diff";
+import { isUnchanged, mergePreservingTimestamps } from "./diff";
 import { IngestError, fetchConfigJson, fetchModelInfo } from "./hfClient";
 
 const OUT = new URL("../../data/models.json", import.meta.url);
@@ -97,7 +97,7 @@ async function main() {
   modelsFileSchema.parse(file);
 
   const serialised = JSON.stringify(file, null, 2) + "\n";
-  if (serialised === existing) {
+  if (isUnchanged(existing, serialised)) {
     console.log("no change");
     return;
   }
