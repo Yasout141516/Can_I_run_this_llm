@@ -24,10 +24,11 @@ Approved visual design: [`docs/design/style-reference.html`](docs/design/style-r
 | Welcome page + box-sizing fix | **Done this session**, see below. |
 | Nav bar, Browse page, home best-fits | **Done this session**, see below. |
 | Benchmarks page + curated scores | **Done this session**, see below. |
-| 3 — Ingestion pipeline + GitHub Actions cron | Not started. Only 3 seed models ship today. |
+| 3 — Ingestion pipeline | **Merged, but not switched on.** See below — `data/models.json` is still the hand-written one. |
+| 3b — GitHub Actions cron | Not built. Cut mid-run; see the `"auto"` blocker below for why that was lucky. |
 | 4 — Benchmarks page, `/detect`, coach-mark tour | Not started. |
 
-`main` is green: **212 tests across 23 files**, `npm run build` clean. `npm run dev` serves on
+`main` is green: **261 tests across 29 files**, `npm run build` clean. `npm run dev` serves on
 http://localhost:5173.
 
 ## What this session did
@@ -140,6 +141,53 @@ scores come from vendors' own cards under their own harnesses. Putting real per-
 attribution on screen means adding a field at ingestion time, the same call as `license` and
 `releasedAt`.
 
+### 5. Plan 3 — ingestion pipeline — BUILT AND MERGED, BUT NOT SWITCHED ON
+
+Plan: [`docs/superpowers/plans/2026-09-14-ingestion-pipeline-and-ci.md`](docs/superpowers/plans/2026-09-14-ingestion-pipeline-and-ci.md).
+Seven of its eight tasks were executed subagent-driven with a review after each. `scripts/ingest/`
+reads `config/families.json`, fetches architecture and real GGUF byte sizes from Hugging Face,
+merges the curated benchmarks, validates against the app's own schema, and rewrites
+`data/models.json` only when content actually changed. `npm run ingest`. Also read
+[`scripts/ingest/README.md`](scripts/ingest/README.md).
+
+**It works. It has been run against the live API. Its output is not committed.** Read the next
+paragraph before you run it.
+
+#### The blocker: `"auto"` has no definition
+
+`src/lib/compat/evaluate.ts` resolves `quantId: "auto"` as `loadable[0]` — the first entry in the
+model's quants array, **with no fit check at all**. The hand-written seed data happens to list a
+fitting quantisation first, which is why nobody noticed. Real ingested data emits quants in
+`GGUF_BPW` order, which begins at FP16, so against real data `"auto"` selects the largest
+quantisation for every model and almost nothing runs. **16 tests across 6 files fail on real data
+for this reason.**
+
+This was deliberately NOT fixed. The spec declares `quantId: string | "auto"` (§4) but never says
+what auto should *choose*. Redefining it as "the best quantisation that fits" changes verdicts
+across the whole app — a product decision, not a defect with one obvious answer. **Decide this
+first; everything else about the pipeline is waiting on it.**
+
+A second, smaller thing is waiting on the same decision: `withEstimates` emits only `GGUF_BPW`
+ids, so a real run drops the `AWQ-4bit` entry Llama 3.1 8B currently carries. No config file can
+reproduce it, and three tests depend on it.
+
+**Do not build the GitHub Actions cron until both are resolved.** It was cut from the run, which
+turned out to be lucky — a scheduled job would have failed at `npm test` on its first real run
+and gone on failing weekly.
+
+#### What the run found that hand-written data had hidden
+
+Beyond `"auto"`, the review loop caught three defects in code the plan itself had specified:
+
+- `fetchModelInfo` defaulted `siblings ?? []`, which would silently turn a malformed response into
+  "this model has no GGUF files" and downgrade every size to an estimate. Now throws (spec §12).
+- `readArchitecture` used `typeof config.head_dim === "number"` to decide whether to derive, so a
+  present-but-corrupt `head_dim` (`null`, `"128"`) was silently replaced by a computed value. Now
+  distinguishes absence from invalidity.
+- A split GGUF recorded the `fileName` of whichever part arrived first. `runCommand` feeds that
+  filename into `llama-cli -m`, and llama.cpp opens a sharded model via part 1 — so the app would
+  have printed a copy-pasteable command that cannot load the model.
+
 ## Architecture, in one screen
 
 ```
@@ -162,6 +210,7 @@ src/features/results/     useVerdicts, StatTiles, Filters, ModelList,
                           ModelCard, ModelTable, sort, ResultsEmptyState
 src/features/report/      ModelReport, MemoryBar, QuantTable, RunItBlock
 src/pages/                WelcomePage, CalculatorPage, BrowsePage, BenchmarksPage
+scripts/ingest/           hfClient, architecture, quants, assemble, diff, main (+ README)
 ```
 
 ## Rules that are settled — do not relitigate without a reason
