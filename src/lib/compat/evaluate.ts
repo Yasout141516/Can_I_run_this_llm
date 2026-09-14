@@ -26,8 +26,13 @@ const HARDWARE_LABELS: Record<HardwareKind, string> = {
 
 /**
  * Picks the requested quant, or for "auto" the first one the engine can
- * load — data files list quants largest-first, so first means best quality
- * that fits the format.
+ * load — with no check that it actually fits the hardware. That only
+ * produces a sane result today because the committed data file happens to
+ * list a fitting quant first for every model in it; nothing here enforces
+ * that ordering or checks size against available memory. What "auto" ought
+ * to mean — smallest that fits, best quality that fits, something else — is
+ * an open decision for a person to make, not this function; until then,
+ * this behaviour is deliberately left as-is (see scripts/ingest/README.md).
  */
 function pickQuant(
   model: ModelSpec,

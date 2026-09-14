@@ -122,7 +122,7 @@ describe("QuantTable — rows evaluate() never actually measured", () => {
       />,
     );
     // AWQ-4bit: Ollama is GGUF-only, so this quant is never loaded at all —
-    // evaluate() hands back an all-zero breakdown, which must not be printed
+    // evaluate() hands back a null breakdown, which must not be printed
     // as a real "0 MB" measurement.
     const blockedRow = screen.getByText("AWQ-4bit").closest("tr")!;
     expect(within(blockedRow).getAllByText("—")).toHaveLength(2); // Needs, Of your VRAM
@@ -140,8 +140,8 @@ describe("QuantTable — rows evaluate() never actually measured", () => {
     // vLLM is discrete-GPU-only. Pairing it with Apple Silicon was not
     // reachable in the UI before the Device type selector existed — the
     // "engine" wont-run guard hits before any quant is even picked, so
-    // every row gets the same all-zero placeholder breakdown the "format"
-    // guard produces, and it needs the same treatment.
+    // every row gets the same null breakdown the "format" guard produces,
+    // and it needs the same treatment.
     render(
       <QuantTable
         model={llama8b}

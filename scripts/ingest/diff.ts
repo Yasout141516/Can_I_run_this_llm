@@ -8,6 +8,11 @@ const withoutTimestamp = (m: ModelSpec) =>
  * changed. Without this the scheduled job rewrites data/models.json every
  * run, and the commit log — which exists to make every data change a
  * reviewable diff (spec §6) — fills with timestamp bumps instead.
+ *
+ * A model present in `previous` but absent from `next` is dropped: this
+ * function only carries timestamps forward for models the current run still
+ * builds. This is how removing a line from config/families.json removes a
+ * model from data/models.json — there is no separate deletion step.
  */
 export function mergePreservingTimestamps(next: ModelSpec[], previous: ModelSpec[]): ModelSpec[] {
   const before = new Map(previous.map((m) => [m.id, m]));
