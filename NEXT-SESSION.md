@@ -1,280 +1,143 @@
-# Handoff — Runcheck, 2026-09-13
+# Handoff — Runcheck, 2026-09-14
 
-Picking up in a fresh conversation. Everything below is current as of `main` @ `e997bf4`.
-
-Read this first, then [`docs/superpowers/notes/2026-09-13-carried-into-plan-3.md`](docs/superpowers/notes/2026-09-13-carried-into-plan-3.md).
+Current as of `main` @ `64675c7`. Read this, then
+[`docs/superpowers/notes/2026-09-14-carried-out-of-plan-3.md`](docs/superpowers/notes/2026-09-14-carried-out-of-plan-3.md)
+for the decision record — every ruling taken without asking, what it costs if it was wrong, and
+what the review loop caught.
 
 ## What Runcheck is
 
-A static web app that tells you whether a given LLM will run on your hardware. You describe
-your machine and inference settings; it sorts every tracked model into **Run on GPU**,
-**CPU Offloaded**, or **Won't Run**, and shows the arithmetic behind each verdict rather than
-a bare red X. Inspired by runthisllm.com, llmrun.dev and canirun.ai — none of which publish
-their math.
+A static web app that tells you whether a given LLM will run on your hardware. You describe your
+machine and inference settings; it sorts every tracked model into **Run on GPU**, **CPU Offloaded**
+or **Won't Run**, and shows the arithmetic behind each verdict rather than a bare red X. Inspired by
+runthisllm.com, llmrun.dev and canirun.ai — none of which publish their math.
 
 Binding spec: [`docs/superpowers/specs/2026-09-12-llm-hardware-compatibility-checker-design.md`](docs/superpowers/specs/2026-09-12-llm-hardware-compatibility-checker-design.md)
 Approved visual design: [`docs/design/style-reference.html`](docs/design/style-reference.html)
+
+`main` is green: **261 tests across 29 files**, `npm run build` clean. `npm run dev` serves on
+http://localhost:5173.
 
 ## Where the work stands
 
 | Plan | State |
 |---|---|
 | 1 — Foundation & compatibility engine | **Merged.** Pure engine + validated data layer. |
-| 2 — Calculator UI & model report | **Merged.** `/calculator`, `/model/:id` report. |
-| Welcome page + box-sizing fix | **Done this session**, see below. |
-| Nav bar, Browse page, home best-fits | **Done this session**, see below. |
-| Benchmarks page + curated scores | **Done this session**, see below. |
-| 3 — Ingestion pipeline | **Merged, but not switched on.** See below — `data/models.json` is still the hand-written one. |
-| 3b — GitHub Actions cron | Not built. Cut mid-run; see the `"auto"` blocker below for why that was lucky. |
-| 4 — Benchmarks page, `/detect`, coach-mark tour | Not started. |
+| 2 — Calculator UI & model report | **Merged.** |
+| Welcome page, nav, Browse, Benchmarks | **Merged** 2026-09-13/14. |
+| 3 — Ingestion pipeline | **Merged, but not switched on.** See the blocker below. |
+| 3b — GitHub Actions cron | **Not built.** Cut mid-run. Do not build it until the blocker is resolved. |
+| 4 — `/detect`, coach-mark tour | Not started. |
 
-`main` is green: **261 tests across 29 files**, `npm run build` clean. `npm run dev` serves on
-http://localhost:5173.
-
-## What this session did
-
-Both items that were queued as ready are implemented, tested and green — not yet committed
-at the time of writing.
-
-### 1. Welcome landing page — done
-
-`/` is now `WelcomePage`; the calculator moved to `/calculator`; `/model/:id` unchanged, with
-`HardwareProvider` still above all three. The landing page carries the masthead copy, a legend
-of the three verdicts rendered with the real `VerdictPill`, a primary CTA into the calculator,
-and one line on the differentiator. It quotes no live numbers — there is a test asserting it
-renders *outside* a `HardwareProvider`, which is what pins that down.
-
-`Button.tsx` is back, as a router `Link` styled `.btn .btn-primary`. It deliberately renders an
-anchor, not a `<button>`: its only consumer is a destination. If the Plan 4 coach-mark needs a
-real button, give the file a sibling rather than widening this one. The restored `.btn` CSS
-block omits `.btn-ghost`, `.btn-secondary` and `.btn[disabled]` — no consumer, and `/simplify`
-would delete them again.
-
-Both report back-links now point at `/calculator`. The shared-state regression test moved to
-`initialEntries={["/calculator"]}` with its assertions untouched — it still fails if the shared
-`HardwareProvider` is removed.
-
-### 2. Form inputs overflowing their panel — done
-
-`*, *::before, *::after { box-sizing: border-box; }` added near the top of `tokens.css`, and the
-same reset added to `docs/design/style-reference.html`, which had the identical defect and would
-otherwise reintroduce it on the next port.
-
-Three explicitly-sized bordered elements were bumped to keep the geometry the approved design
-renders, now that the border counts inward: `.help` 19→23px, `.legend i` 11→15px, `.bar`
-height 30→34px, in both files. The memory-bar segments and `.model-table` are *improved* rather
-than affected — each previously overflowed its container by its own border width and now sums
-exactly.
-
-**Still open: nobody has looked at the running app.** The analysis above is static reading of
-the CSS; no browser automation is installed in this repo and none was added. `npm run dev`,
-then eyeball the hardware panel, the table view and the report's memory bar.
-
-### 3. Nav bar, Browse page, home best-fits — done
-
-Brainstormed and approved in conversation; no spec doc, by agreement, once Compare was dropped
-from scope. Routes are now:
-
-```
-/            Home       hero + verdict legend + best-fits list
-/calculator  Check my hardware — unchanged
-/browse      Browse LLMs — the catalogue
-/model/:id   Report — unchanged
-```
-
-`Nav` sits above `<Routes>` inside `HardwareProvider`, on every page. `NavLink` marks the active
-route with `aria-current="page"`, styled as the inverted-ink treatment a pressed chip uses. The
-wordmark is a `Link`, never an `h1` — home owns the only one.
-
-**Browse is deliberately verdict-free.** It answers "what is this model": family, params (with
-the MoE split), layers, max context, smallest quant with its measured/estimated provenance,
-categories. No hardware, no pills — whether it runs is the calculator's question and the
-report's. There is a test asserting no verdict text appears there.
-
-To let both lists share one definition of "matches", `applyFilters` was split: `matchesModel()`
-is the predicate, `applyFilters()` is its `ScoredModel[]` wrapper, and Browse filters bare
-`ModelSpec[]` through the same function. Sorting splits by what it needs: verdict-dependent keys
-stay in `sortRows`, data-only keys (`name`/`params`/`context`/`size`, where size is the smallest
-quant) live in `sortModels`. `Filters` is now generic over its sort-key type and takes a
-`sortOptions` list, so a page cannot offer a sort its list cannot perform; its view toggle is
-optional and Browse passes none.
-
-**Home now scores models**, so the welcome page's "renders outside a HardwareProvider" test is
-gone — that test pinned a design decision that has since been reversed, and was deleted rather
-than weakened. Home shows the six best fits via the existing `ModelCard`, ordered by
-`sortRows(rows, "compatibility")`, above a `Browse all models →` link.
-
-`HardwareSummary` (in `src/features/hardware/`) states the machine a page scored against, with
-`change →` into the calculator. **It is the fix for known gap 3** — drop it into `ModelReport`
-and a deep-linked report stops saying "of your VRAM" about hardware the recipient never set.
-
-### 4. Benchmarks page — done
-
-`/benchmarks`: a sortable, filterable scores table, a column per `BenchmarkId`, plus a glossary
-saying what each benchmark actually tests. Approved shape was the spec's table (§8) rather than
-the leaderboard-card layout of the `llmrun.dev/benchmark` reference the user pointed at — that
-site ranks the whole model world, while Runcheck can only rank its own catalogue.
-
-**The data was curated first, by hand, from vendor model cards** — the spec forbids scraping
-(§6) and the previous state of `config/benchmarks.json` was two MMLU numbers. Now:
-
-- **Llama 3.1 8B Instruct** and **Llama 3.3 70B Instruct** — six of seven benchmarks each, from
-  Meta's own instruction-tuned evaluation tables, with shot settings and metrics recorded in
-  `_source`. Neither card reports SWE-bench.
-- **Qwen3 235B A22B** — all seven left `null`. Its model card carries no evaluation table at
-  all, and the Qwen3 blog publishes its numbers as chart images. A rendered-page fetch did
-  return "MMLU-Pro 68.18 / SWE-bench Pro 21.41", but those came from a leaderboard widget
-  embedded in the HF page rather than from Qwen, and were discarded rather than recorded.
-  **Do not fill this row without a citable text source.**
-
-`data/models.json` was updated by merging `config/benchmarks.json` by hand, because the
-ingestion job that is supposed to do that (Plan 3 step 4) does not exist yet. **When Plan 3
-lands, that merge becomes the job's responsibility and this hand-merge stops being the path.**
-
-Two honesty rules are encoded in tests: an unreported score renders as an em dash and never a
-zero ("did not report" ≠ "scored nothing"), and a model with no score sorts last under every
-ranking regardless of direction.
-
-**Per-model provenance is not shown.** `_source` lives in `config/benchmarks.json`, which the
-app never loads — `ModelSpec` has no field for it, so the page carries one general note saying
-scores come from vendors' own cards under their own harnesses. Putting real per-score
-attribution on screen means adding a field at ingestion time, the same call as `license` and
-`releasedAt`.
-
-### 5. Plan 3 — ingestion pipeline — BUILT AND MERGED, BUT NOT SWITCHED ON
-
-Plan: [`docs/superpowers/plans/2026-09-14-ingestion-pipeline-and-ci.md`](docs/superpowers/plans/2026-09-14-ingestion-pipeline-and-ci.md).
-Seven of its eight tasks were executed subagent-driven with a review after each. `scripts/ingest/`
-reads `config/families.json`, fetches architecture and real GGUF byte sizes from Hugging Face,
-merges the curated benchmarks, validates against the app's own schema, and rewrites
-`data/models.json` only when content actually changed. `npm run ingest`. Also read
-[`scripts/ingest/README.md`](scripts/ingest/README.md).
-
-**It works. It has been run against the live API. Its output is not committed.** Read the next
-paragraph before you run it.
-
-#### The blocker: `"auto"` has no definition
+## START HERE: one decision blocks the pipeline
 
 `src/lib/compat/evaluate.ts` resolves `quantId: "auto"` as `loadable[0]` — the first entry in the
-model's quants array, **with no fit check at all**. The hand-written seed data happens to list a
-fitting quantisation first, which is why nobody noticed. Real ingested data emits quants in
-`GGUF_BPW` order, which begins at FP16, so against real data `"auto"` selects the largest
-quantisation for every model and almost nothing runs. **16 tests across 6 files fail on real data
-for this reason.**
+model's quants array, **with no fit check at all**. Hand-written seed data happens to list a fitting
+quantisation first, which is why nobody noticed. Real ingested data emits quants in `GGUF_BPW`
+order, which begins at FP16, so `"auto"` would pick the largest quantisation for every model and
+almost nothing would run. **16 tests fail on real data for this reason.**
 
-This was deliberately NOT fixed. The spec declares `quantId: string | "auto"` (§4) but never says
-what auto should *choose*. Redefining it as "the best quantisation that fits" changes verdicts
-across the whole app — a product decision, not a defect with one obvious answer. **Decide this
-first; everything else about the pipeline is waiting on it.**
+The spec declares `quantId: string | "auto"` (§4) but never says what auto should *choose*. Deciding
+it changes verdicts across the whole app, so it was parked rather than guessed at. The readings and
+their consequences are laid out in the carried-out note. **Everything about the ingestion pipeline
+is waiting on this.**
 
-A second, smaller thing is waiting on the same decision: `withEstimates` emits only `GGUF_BPW`
-ids, so a real run drops the `AWQ-4bit` entry Llama 3.1 8B currently carries. No config file can
-reproduce it, and three tests depend on it.
+## Four routes, all live
 
-**Do not build the GitHub Actions cron until both are resolved.** It was cut from the run, which
-turned out to be lucky — a scheduled job would have failed at `npm test` on its first real run
-and gone on failing weekly.
+```
+/            Home       hero + verdict legend + best-fits list (scored, hardware-aware)
+/calculator  The tool   hardware panel + live results
+/browse      Catalogue  every tracked model, verdict-free, searchable and sortable
+/model/:id   Report     memory breakdown, every quantisation, run command
+/benchmarks  Scores     sortable table + a glossary of what each benchmark measures
+```
 
-#### What the run found that hand-written data had hidden
-
-Beyond `"auto"`, the review loop caught three defects in code the plan itself had specified:
-
-- `fetchModelInfo` defaulted `siblings ?? []`, which would silently turn a malformed response into
-  "this model has no GGUF files" and downgrade every size to an estimate. Now throws (spec §12).
-- `readArchitecture` used `typeof config.head_dim === "number"` to decide whether to derive, so a
-  present-but-corrupt `head_dim` (`null`, `"128"`) was silently replaced by a computed value. Now
-  distinguishes absence from invalidity.
-- A split GGUF recorded the `fileName` of whichever part arrived first. `runCommand` feeds that
-  filename into `llama-cli -m`, and llama.cpp opens a sharded model via part 1 — so the app would
-  have printed a copy-pasteable command that cannot load the model.
+`Nav` sits above `<Routes>` inside `HardwareProvider`, on every page.
 
 ## Architecture, in one screen
 
 ```
-config/families.json      hand-edited: tracked HF orgs/repos
-config/benchmarks.json    hand-edited: benchmark scores + sources
-data/models.json          3 seed models (Plan 3 regenerates this)
+config/families.json      hand-edited: tracked repos + arch mirrors + GGUF repos
+config/benchmarks.json    hand-edited: benchmark scores + the source of each
+data/models.json          3 models — still the HAND-WRITTEN one, see the blocker
 data/gpus.json            12 GPUs, hand-curated
 data/laptops.json         5 laptops, hand-curated
+scripts/ingest/           the pipeline: hfClient, architecture, quants, assemble,
+                          diff, main (+ README). Run with `npm run ingest`.
 src/lib/compat/           THE ENGINE — pure, no React/fetch/fs/clock/locale
 src/lib/data/             schema validation + load-once
 src/lib/ui/               format.ts, paths.ts
-src/components/Nav.tsx    the persistent nav bar
-src/components/ui/        Badge, Button, Chip, Field, HelpDot, Pill, Segmented,
-                          TightFitBadge, WhyNote
+src/components/           Nav; ui/ holds Badge, Button, Chip, Field, HelpDot, Pill,
+                          Segmented, TightFitBadge, WhyNote
 src/hooks/                useHardwareForm (+ HardwareProvider)
 src/features/hardware/    HardwarePanel, DeviceLookup, HardwareSummary
 src/features/browse/      CatalogTable
 src/features/benchmarks/  benchmarkMeta (labels, blurbs, ranking), ScoreTable
-src/features/results/     useVerdicts, StatTiles, Filters, ModelList,
-                          ModelCard, ModelTable, sort, ResultsEmptyState
+src/features/results/     useVerdicts, StatTiles, Filters, ModelList, ModelCard,
+                          ModelTable, sort, ResultsEmptyState
 src/features/report/      ModelReport, MemoryBar, QuantTable, RunItBlock
 src/pages/                WelcomePage, CalculatorPage, BrowsePage, BenchmarksPage
-scripts/ingest/           hfClient, architecture, quants, assemble, diff, main (+ README)
 ```
 
 ## Rules that are settled — do not relitigate without a reason
 
 - **`src/lib/compat/` is pure and deterministic.** No React, `fetch`, `node:fs`, `Date.now()`,
   `toLocaleString`, `Math.random`, `performance.now`, `Intl.`, `process.`, `window.`,
-  `localStorage`. `purity.test.ts` enforces this by scanning source text **including
-  comments** — a comment mentioning a banned token fails the suite.
+  `localStorage`. `purity.test.ts` scans source text **including comments** — a comment merely
+  mentioning a banned token fails the suite.
+- **Ingestion validates and fails loudly rather than defaulting** (spec §12). A partially-correct
+  `data/models.json` is worse than a stale one. Two of this plan's own specified code blocks were
+  overruled to honour this.
+- **Benchmark scores are hand-curated, never scraped** (spec §6). Ingestion merges
+  `config/benchmarks.json`; it never derives a score. A `null` means "not reported" and is
+  deliberately distinct from zero.
 - **The UI never re-implements the math.** If a number can come from `evaluate()`, it does.
-  `formatPercent` is the one presentation exception, and it deliberately does not clamp at
-  100% — "200%" tells the user how far over they are.
 - **Three golden anchors must not move:** `6_591_932_032` (Llama 3.1 8B total),
   `45_781_810_560` (Llama 3.3 70B total), `gpuLayers` = 16. They are also printed in
-  `docs/design/style-reference.html` — **if one moves, that page is now wrong too.**
+  `docs/design/style-reference.html` — if one moves, that page is wrong too.
 - **Bytes internally, decimal GB at the edges.** `1 GB = 1_000_000_000`. Never GiB.
 - **Status is never carried by colour alone** — glyph, word, and colour, everywhere.
-- **A lookup prefills form state and then has no authority.** No locked or "custom" mode;
-  overriding a prefilled value is just typing.
-- **Hardware lives in one `HardwareProvider` above all routes**, so the report scores against
-  what the user configured rather than defaults.
+- **A lookup prefills form state and then has no authority.** Overriding a prefilled value is just
+  typing.
+- **Hardware lives in one `HardwareProvider` above all routes.** A regression test renders the real
+  `<App/>` and fails if it is removed.
 - **Three verdict buckets, not four.** "Tight fit" is a presentation flag derived from the
-  percentage, in offload amber beside the pill — the engine's contract is unchanged.
+  percentage.
 - **Overhead constants are empirical** (`GGUF_OVERHEAD`, `SERVER_OVERHEAD` in `engines.ts`),
-  calibrated so the 8B anchor lands at 0.60 GB. First thing to tune against real reports.
+  calibrated so the 8B anchor lands at 0.60 GB.
 
 ## Known gaps, in priority order
 
-From the final review of Plan 2. Full detail in the carried-into-plan-3 note.
+1. **`"auto"` is undefined** — see above. Blocks the pipeline.
+2. **No SPA fallback for `BrowserRouter`.** No `vercel.json` / `netlify.toml` / `_redirects`. On a
+   plain static host a direct request to `/browse` or `/model/:id` 404s. **Deferred: the host is
+   undecided.** GitHub Pages supports no rewrites at all and needs either the `404.html` trick or
+   `HashRouter`, *plus* a Vite `base` and a router `basename`, because a project repo serves from
+   `/<repo>/` rather than the domain root.
+3. **The report shows no benchmark scores**, though spec §8 lists them and `/benchmarks` renders
+   them elsewhere. A small addition to `ModelReport` now.
+4. **Per-score benchmark provenance is invisible.** `_source` lives in `config/benchmarks.json`,
+   which the app never loads, and `ModelSpec` has no field for it. Putting real attribution on
+   screen is an ingestion-time schema decision, like `license` and `releasedAt`.
+5. **A deep-linked report has no hardware summary** — `HardwareSummary` exists and solves exactly
+   this; it just is not wired into `ModelReport`.
+6. **"Of your VRAM" understates vLLM and SGLang** — the percentage is of full `usableVram`, but
+   those engines only get `memoryUtilization` (90%) of it.
+7. **Heading hierarchy is thin** — model names are links, not headings.
+8. **Result-list state is lost on return** — query, categories, sort and view are local state.
 
-1. **`Verdict` should say when it has no breakdown.** `QuantTable` infers "the engine gave up
-   before computing" from `totalBytes === 0` — shape-inference the engine should state
-   outright (`breakdown: Breakdown | null`). Every new early-return guard in `evaluate()` must
-   currently remember to zero the breakdown for this to keep working. **Do this in Plan 3.**
-2. **The report still shows no benchmark scores**, though spec §8 lists them among its
-   contents. `/benchmarks` now renders them and `ModelSpec.benchmarks` is populated, so this is
-   a small addition to `ModelReport` rather than new work.
-3. **A deep-linked report has no hardware summary** — `/model/:id` says "of your VRAM" while
-   scoring against the recipient's defaults, with nothing saying so. `HardwareSummary` now
-   exists and solves exactly this; it just has not been added to the report.
-4. **No SPA fallback for `BrowserRouter`.** No `vercel.json` / `netlify.toml` / `_redirects`.
-   On a plain static host, a direct request to `/model/:id` or `/browse` 404s. **Now four
-   deep-linkable routes, so this is worse than when it was written.** Two-line file; flagged
-   and deliberately not fixed without a decision on the host. **Deferred on 2026-09-14: the
-   host is undecided.** Vercel wants `vercel.json`, Netlify and Cloudflare Pages want
-   `_redirects`; GitHub Pages supports no rewrites at all and needs either the `404.html`
-   redirect trick or a switch to `HashRouter`, *plus* a Vite `base` and a router `basename`,
-   because a project repo is served from `/<repo>/` and not the domain root. Decide the host
-   before writing the file.
-5. **"Of your VRAM" understates vLLM and SGLang** — the percentage is of full `usableVram`,
-   but those engines only get `memoryUtilization` (90%) of it.
-6. **Heading hierarchy is thin** — one `h1`, no `h2`s; model names are links, not headings.
-7. **Result-list state is lost on return** — query, categories, sort and view are local state;
-   the report's back-link resets all four.
+Smaller items deferred during Plan 3 are listed in the carried-out note rather than here.
 
 ## How this project has been run
 
-Superpowers throughout: `brainstorming` → `writing-plans` → `subagent-driven-development`
-(fresh implementer per task, task review after each, whole-branch review at the end) →
-`/simplify` → `finishing-a-development-branch`. Plans live in `docs/superpowers/plans/`,
-specs in `docs/superpowers/specs/`.
+Superpowers throughout: `brainstorming` → `writing-plans` → `subagent-driven-development` (fresh
+implementer per task, task review after each, whole-branch review at the end) → `/simplify` →
+merge. Plans live in `docs/superpowers/plans/`, specs in `docs/superpowers/specs/`, decision records
+in `docs/superpowers/notes/`.
 
-Working preferences observed so far: confirm the design before writing code; keep the planning
-visible; pause before web searches or external fetches rather than doing them autonomously;
-commit everything to https://github.com/Yasout141516/Can_I_run_this_llm.
+Working preferences observed: confirm the design before writing code; keep the planning visible;
+pause before web searches or external fetches rather than doing them autonomously; commit to
+https://github.com/Yasout141516/Can_I_run_this_llm.
 
-The welcome page is **bounded and already approved** — it does not need a new spec or plan,
-just implementation with TDD. Plan 3 is architectural and gets the full treatment.
+**Nobody has looked at the app in a browser this week.** The welcome page, nav, Browse table,
+Benchmarks table and the `box-sizing` fix have been verified only in jsdom and by reading CSS.
