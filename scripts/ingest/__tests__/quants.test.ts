@@ -47,7 +47,7 @@ describe("measuredQuants", () => {
     expect(measuredQuants(half)).toEqual([]);
   });
 
-  it("sums a split quantisation whose parts arrive out of order", () => {
+  it("sums a split quantisation whose parts arrive out of order, naming part 1", () => {
     // Same real sizes as the split-quantisation test above, reversed. The
     // grouping keys off part indices, not arrival order.
     const parts = [
@@ -57,6 +57,13 @@ describe("measuredQuants", () => {
     const [q] = measuredQuants(parts);
     expect(q!.id).toBe("Q6_K");
     expect(q!.sizeBytes).toBe(57_888_148_672);
+    // fileName must name part 1 regardless of arrival order: a sharded GGUF
+    // is opened by pointing the engine at its first shard, and runCommand
+    // hands this value straight to llama-cli/koboldcpp — naming part 2 would
+    // produce a copy-pasteable command that fails to load the model.
+    expect(q!.fileName).toBe(
+      "Llama-3.3-70B-Instruct-Q6_K/Llama-3.3-70B-Instruct-Q6_K-00001-of-00002.gguf",
+    );
   });
 
   it("drops a split with a duplicated part rather than doubling one part's bytes", () => {

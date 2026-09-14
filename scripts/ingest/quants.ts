@@ -32,6 +32,10 @@ interface Group {
   indices: Set<number>;
   expected: number;
   fileName: string;
+  /** Part index that `fileName` belongs to. Tracked so that whichever file
+   *  the siblings array lists first, `fileName` still ends up naming part 1
+   *  — the part llama.cpp must be pointed at to open a sharded GGUF. */
+  fileNamePart: number;
   /** Set once a later file disagrees with the group's established `expected`
    *  part count, or repeats a part index already seen. Either is a malformed
    *  group, dropped exactly like a missing part — never merged, never
@@ -75,7 +79,14 @@ export function measuredQuants(siblings: { rfilename: string; size?: number }[])
 
     const group = groups.get(id);
     if (group === undefined) {
-      groups.set(id, { bytes: size, indices: new Set([partIndex]), expected, fileName: rfilename, invalid: false });
+      groups.set(id, {
+        bytes: size,
+        indices: new Set([partIndex]),
+        expected,
+        fileName: rfilename,
+        fileNamePart: partIndex,
+        invalid: false,
+      });
       continue;
     }
 
@@ -90,6 +101,12 @@ export function measuredQuants(siblings: { rfilename: string; size?: number }[])
 
     group.indices.add(partIndex);
     group.bytes += size;
+    // A sharded GGUF is opened via its first shard, so `fileName` must name
+    // part 1 regardless of the order files arrived in the siblings array.
+    if (partIndex < group.fileNamePart) {
+      group.fileName = rfilename;
+      group.fileNamePart = partIndex;
+    }
   }
 
   return [...groups.entries()]
@@ -105,7 +122,10 @@ export function measuredQuants(siblings: { rfilename: string; size?: number }[])
 
 /** Every priceable quantisation: measured where a file exists, priced from
  *  bits-per-weight where it does not. Order follows GGUF_BPW, so the quant
- *  control reads high precision to low. */
+ *  control reads high precision to low. That ordering has a second,
+ *  load-bearing consumer: `pickQuant("auto")` in src/lib/compat/evaluate.ts
+ *  picks the first loadable entry, so this array's order is what "auto"
+ *  resolves to today. */
 export function withEstimates(measured: QuantOption[], totalParams: number): QuantOption[] {
   const byId = new Map(measured.map((q) => [q.id, q]));
   return Object.entries(GGUF_BPW).map(
