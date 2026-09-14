@@ -58,6 +58,13 @@ async function main() {
       const hfRepo = `${family.hfOrg}/${repo.name}`;
       const archRepo = repo.archRepo ?? hfRepo;
 
+      // `archRepo` is the mirror used for config.json and the parameter
+      // count, not necessarily the canonical repo the model id names — for
+      // example an `unsloth/*` re-upload of a gated original. That's correct
+      // for reading a re-upload's config, but nothing here verifies the
+      // mirror's parameter count actually matches the model the id claims.
+      // `source.archRepo` records which repo was used in the output so a
+      // human can audit that assumption.
       const info = await fetchModelInfo(archRepo);
       const totalParams = info.safetensors?.total;
       if (typeof totalParams !== "number") {
@@ -81,6 +88,19 @@ async function main() {
       });
       built.push(model);
       const measured = model.quants.filter((q) => q.sizeSource === "measured").length;
+      // Zero measured quants is expected for a model that names no GGUF
+      // repo (e.g. Qwen3-235B-A22B) — nothing to measure there. But when
+      // `ggufRepo` IS set and still nothing measured, the pipeline's whole
+      // purpose (spec §6 step 2: real measured sizes) has silently failed —
+      // most likely `?blobs=true` stopped reporting sizes — and writing a
+      // schema-valid, honestly-badged file would hide that failure behind
+      // an "ok" line instead of surfacing it.
+      if (repo.ggufRepo && measured === 0) {
+        throw new IngestError(
+          `${repo.ggufRepo}: listed ${siblings.length} files but measured 0 quantisations` +
+            " — the API's ?blobs=true may have stopped reporting file sizes",
+        );
+      }
       console.log(`ok ${hfRepo} — ${measured} measured quantisations`);
     }
   }
@@ -94,9 +114,12 @@ async function main() {
 
   // Validate before writing: a file that fails the app's own schema must
   // never reach disk, because the app throws on load rather than degrading.
-  modelsFileSchema.parse(file);
+  // Serialise the parsed result, not `file` itself — zod strips unknown
+  // keys rather than rejecting them, so `file` could still carry keys the
+  // schema would have dropped.
+  const validated = modelsFileSchema.parse(file);
 
-  const serialised = JSON.stringify(file, null, 2) + "\n";
+  const serialised = JSON.stringify(validated, null, 2) + "\n";
   if (isUnchanged(existing, serialised)) {
     console.log("no change");
     return;
