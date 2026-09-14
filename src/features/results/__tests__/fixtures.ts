@@ -1,4 +1,6 @@
-import { GB, type HardwareSpec, type Settings } from "../../../lib/compat";
+import { GB, evaluate, type HardwareSpec, type Settings } from "../../../lib/compat";
+import { loadModels } from "../../../lib/data/load";
+import type { ScoredModel } from "../useVerdicts";
 
 /** The reference machine the plan's golden anchors were computed against. */
 export const REFERENCE_HW: HardwareSpec = {
@@ -26,4 +28,16 @@ export const APPLE_HW: HardwareSpec = {
   vramBytes: 24 * GB,
   ramBytes: 24 * GB,
   ramType: "unified",
+};
+
+/**
+ * A genuinely null-breakdown row, produced the way evaluate() produces one in
+ * the app: vLLM has no Metal backend, so the engine guard rejects this model
+ * on Apple Silicon before any memory arithmetic runs at all. Built from a real
+ * evaluate() call rather than a hand-written Verdict literal, so it cannot
+ * drift from what the engine actually returns.
+ */
+export const unevaluableRow: ScoredModel = {
+  model: loadModels()[0]!,
+  verdict: evaluate(loadModels()[0]!, APPLE_HW, { ...REFERENCE_SETTINGS, engine: "vllm" }),
 };

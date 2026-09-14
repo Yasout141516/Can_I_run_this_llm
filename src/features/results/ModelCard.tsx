@@ -4,7 +4,7 @@ import { Badge } from "../../components/ui/Badge";
 import { VerdictPill } from "../../components/ui/Pill";
 import { TightFitBadge } from "../../components/ui/TightFitBadge";
 import { WhyNote } from "../../components/ui/WhyNote";
-import { formatGB, formatParams, formatPercent, formatTokens } from "../../lib/ui/format";
+import { formatBreakdownGB, formatBreakdownPercent, formatParams, formatTokens } from "../../lib/ui/format";
 import { modelPath } from "../../lib/ui/paths";
 import type { ScoredModel } from "./useVerdicts";
 
@@ -46,10 +46,10 @@ export const ModelCard = memo(function ModelCard({
             {formatTokens(model.arch.maxContext)} tokens
           </span>
           <span>
-            <b>{verdict.breakdown === null ? "—" : formatGB(verdict.breakdown.totalBytes)}</b>
+            <b>{formatBreakdownGB(verdict.breakdown)}</b>
             {" · "}
             <b>
-              {verdict.breakdown === null ? "—" : formatPercent(verdict.breakdown.totalBytes, vramBytes)}
+              {formatBreakdownPercent(verdict.breakdown, vramBytes)}
             </b>
           </span>
         </div>

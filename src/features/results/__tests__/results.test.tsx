@@ -1,26 +1,16 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import { evaluate, GB, type HardwareSpec } from "../../../lib/compat";
+import { GB, type HardwareSpec } from "../../../lib/compat";
 import { loadModels } from "../../../lib/data/load";
-import { isTightFit, scoreModels, type ScoredModel } from "../useVerdicts";
+import { isTightFit, scoreModels } from "../useVerdicts";
 import { ModelList } from "../ModelList";
 import { StatTiles } from "../StatTiles";
-import { APPLE_HW, REFERENCE_HW, REFERENCE_SETTINGS, TINY_HW } from "./fixtures";
+import { REFERENCE_HW, REFERENCE_SETTINGS, TINY_HW, unevaluableRow } from "./fixtures";
 
 const hw = REFERENCE_HW;
 const settings = REFERENCE_SETTINGS;
 const rows = () => scoreModels(loadModels(), hw, settings);
-
-/**
- * A genuinely null-breakdown row: vLLM has no Metal backend, so the engine
- * guard rejects this model on Apple Silicon before any memory arithmetic
- * runs. Built via a real evaluate() call, not a hand-written Verdict.
- */
-const unevaluableRow: ScoredModel = {
-  model: loadModels()[0]!,
-  verdict: evaluate(loadModels()[0]!, APPLE_HW, { ...settings, engine: "vllm" }),
-};
 
 describe("scoreModels", () => {
   it("scores every model in the input, in order, without dropping or reordering any", () => {

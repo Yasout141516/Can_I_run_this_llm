@@ -95,7 +95,7 @@ export const laptopsFileSchema = z.object({
  * rather than detected, so a missing archRepo fails at config-load time
  * instead of at 4am in CI.
  */
-export const GATED_ORGS = ["meta-llama"] as const;
+const GATED_ORGS = ["meta-llama"] as const;
 
 const repoEntrySchema = z.object({
   name: z.string().min(1),

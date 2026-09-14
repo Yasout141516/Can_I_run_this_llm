@@ -1,41 +1,36 @@
 import { GGUF_BPW } from "../../src/lib/compat/quant";
 import type { QuantOption } from "../../src/lib/compat/types";
+import type { HfSibling } from "./hfClient";
 
 /** "…-Q6_K-00001-of-00002.gguf" → part 1 of 2. */
 const SPLIT = /-(\d{5})-of-(\d{5})\.gguf$/;
 
+/** The priceable ids, longest first, so "Q4_K_M" wins over any shorter id that
+ *  is also a suffix of it. Built once: GGUF_BPW is a fixed module-level table,
+ *  and quantIdOf runs per file in every repo listing. */
+const QUANT_IDS_LONGEST_FIRST = Object.keys(GGUF_BPW).sort((a, b) => b.length - a.length);
+
 /** Quantisation id from a bartowski-style filename: the trailing segment that
- *  the bits-per-weight table recognises. Longest match first, so "Q4_K_M"
- *  wins over any shorter id that is also a suffix. */
+ *  the bits-per-weight table recognises. */
 function quantIdOf(fileName: string): string | null {
-  const segments = fileName.split("/");
-  // `"a".split("/")` always yields at least one element, so this is never
-  // undefined — but noUncheckedIndexedAccess can't see that, so check it.
-  const last = segments[segments.length - 1];
+  // `"a".split("/")` always yields at least one element, so pop() is never
+  // undefined here — but noUncheckedIndexedAccess can't see that.
+  const last = fileName.split("/").pop();
   if (last === undefined) return null;
-  const base = last.replace(SPLIT, "").replace(/\.gguf$/, "");
-  return (
-    Object.keys(GGUF_BPW)
-      .slice()
-      .sort((a, b) => b.length - a.length)
-      .find((id) => base.toUpperCase().endsWith(`-${id.toUpperCase()}`)) ?? null
-  );
+  const base = last.replace(SPLIT, "").replace(/\.gguf$/, "").toUpperCase();
+  return QUANT_IDS_LONGEST_FIRST.find((id) => base.endsWith(`-${id.toUpperCase()}`)) ?? null;
 }
 
 interface Group {
   bytes: number;
-  /** Part indices seen so far (from SPLIT's first capture group), or {1} for
-   *  a non-split file. A count alone cannot tell a missing part from a
-   *  duplicated one — two files both claiming "part 1 of 2" would match a
-   *  count of 2 while never covering part 2 at all — so the actual indices
-   *  are what gets checked, not how many files arrived. */
-  indices: Set<number>;
+  /** Part index -> the file that carried it. Indices matter, not a count: two
+   *  files both claiming "part 1 of 2" would satisfy a count of 2 while never
+   *  covering part 2 at all. Keying by index catches that, and also answers
+   *  which file is part 1 — the one llama.cpp must be pointed at to open a
+   *  sharded GGUF — without tracking it separately. A non-split file is
+   *  simply the single entry {1 -> itself}. */
+  parts: Map<number, string>;
   expected: number;
-  fileName: string;
-  /** Part index that `fileName` belongs to. Tracked so that whichever file
-   *  the siblings array lists first, `fileName` still ends up naming part 1
-   *  — the part llama.cpp must be pointed at to open a sharded GGUF. */
-  fileNamePart: number;
   /** Set once a later file disagrees with the group's established `expected`
    *  part count, or repeats a part index already seen. Either is a malformed
    *  group, dropped exactly like a missing part — never merged, never
@@ -43,13 +38,14 @@ interface Group {
   invalid: boolean;
 }
 
+
 /** True when `indices` is exactly {1, 2, ..., expected} — no gap, no extra,
  *  no duplicate (duplicates are caught earlier and flip `invalid` instead,
  *  since a Set can't represent "the same index arrived twice"). */
-function isCompleteRun(indices: Set<number>, expected: number): boolean {
-  if (indices.size !== expected) return false;
+function isCompleteRun(parts: Map<number, string>, expected: number): boolean {
+  if (parts.size !== expected) return false;
   for (let i = 1; i <= expected; i++) {
-    if (!indices.has(i)) return false;
+    if (!parts.has(i)) return false;
   }
   return true;
 }
@@ -60,7 +56,7 @@ function isCompleteRun(indices: Set<number>, expected: number): boolean {
  * count — is dropped entirely: an under- or over-reported size is worse than
  * an estimate, because it arrives wearing a "measured" badge and is believed.
  */
-export function measuredQuants(siblings: { rfilename: string; size?: number }[]): QuantOption[] {
+export function measuredQuants(siblings: HfSibling[]): QuantOption[] {
   const groups = new Map<string, Group>();
 
   for (const { rfilename, size } of siblings) {
@@ -81,10 +77,8 @@ export function measuredQuants(siblings: { rfilename: string; size?: number }[])
     if (group === undefined) {
       groups.set(id, {
         bytes: size,
-        indices: new Set([partIndex]),
+        parts: new Map([[partIndex, rfilename]]),
         expected,
-        fileName: rfilename,
-        fileNamePart: partIndex,
         invalid: false,
       });
       continue;
@@ -94,29 +88,25 @@ export function measuredQuants(siblings: { rfilename: string; size?: number }[])
     // group already has, makes the whole group unsizeable — flag it and
     // stop trusting its byte count, rather than silently overwriting
     // `expected` or double-counting a duplicated part's bytes.
-    if (group.expected !== expected || group.indices.has(partIndex)) {
+    if (group.expected !== expected || group.parts.has(partIndex)) {
       group.invalid = true;
       continue;
     }
 
-    group.indices.add(partIndex);
+    group.parts.set(partIndex, rfilename);
     group.bytes += size;
-    // A sharded GGUF is opened via its first shard, so `fileName` must name
-    // part 1 regardless of the order files arrived in the siblings array.
-    if (partIndex < group.fileNamePart) {
-      group.fileName = rfilename;
-      group.fileNamePart = partIndex;
-    }
   }
 
   return [...groups.entries()]
-    .filter(([, g]) => !g.invalid && isCompleteRun(g.indices, g.expected))
+    .filter(([, g]) => !g.invalid && isCompleteRun(g.parts, g.expected))
     .map(([id, g]) => ({
       id,
       format: "gguf" as const,
       sizeBytes: g.bytes,
       sizeSource: "measured" as const,
-      fileName: g.fileName,
+      // isCompleteRun guarantees part 1 is present, and a sharded GGUF is
+      // opened via its first shard whatever order the listing arrived in.
+      fileName: g.parts.get(1)!,
     }));
 }
 

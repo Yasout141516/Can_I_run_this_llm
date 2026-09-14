@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "../../components/ui/Badge";
 import { VerdictPill } from "../../components/ui/Pill";
 import { TightFitBadge } from "../../components/ui/TightFitBadge";
-import { formatGB, formatParamCount, formatPercent } from "../../lib/ui/format";
+import { formatBreakdownGB, formatBreakdownPercent, formatParamCount } from "../../lib/ui/format";
 import { modelPath } from "../../lib/ui/paths";
 import { emptyResultsMessage } from "./ResultsEmptyState";
 import type { ScoredModel } from "./useVerdicts";
@@ -29,11 +29,11 @@ const ModelTableRow = memo(function ModelTableRow({
         <span>{verdict.quantId ?? "—"}</span>
       </td>
       <td>
-        <span>{verdict.breakdown === null ? "—" : formatGB(verdict.breakdown.totalBytes)}</span>
+        <span>{formatBreakdownGB(verdict.breakdown)}</span>
       </td>
       <td>
         <span>
-          {verdict.breakdown === null ? "—" : formatPercent(verdict.breakdown.totalBytes, vramBytes)}
+          {formatBreakdownPercent(verdict.breakdown, vramBytes)}
         </span>
       </td>
       <td>

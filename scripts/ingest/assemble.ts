@@ -1,5 +1,6 @@
 import type { BenchmarkId, Category, ModelSpec } from "../../src/lib/compat/types";
 import { readArchitecture } from "./architecture";
+import type { HfSibling } from "./hfClient";
 import { measuredQuants, withEstimates } from "./quants";
 
 export interface AssembleInput {
@@ -11,7 +12,7 @@ export interface AssembleInput {
   activeParams?: number;
   totalParams: number;
   config: Record<string, unknown>;
-  siblings: { rfilename: string; size?: number }[];
+  siblings: HfSibling[];
   benchmarks: Partial<Record<BenchmarkId, number | null>>;
   fetchedAt: string;
 }

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { modelsFileSchema, SCHEMA_VERSION } from "../schema";
+import { familiesFileSchema, modelsFileSchema, SCHEMA_VERSION } from "../schema";
 import familiesJson from "../../../../config/families.json";
-import { familiesFileSchema } from "../schema";
 
 const validModel = {
   id: "meta-llama/Llama-3.1-8B-Instruct",

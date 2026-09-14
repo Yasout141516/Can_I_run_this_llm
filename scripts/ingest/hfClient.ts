@@ -10,11 +10,17 @@ async function getJson(url: string, what: string): Promise<unknown> {
   return res.json();
 }
 
+/** One file in a repo listing. `size` is present only when the request asked
+ *  for blobs; without it every quantisation would fall back to an estimate. */
+export interface HfSibling {
+  rfilename: string;
+  size?: number;
+}
+
 export interface HfModelInfo {
   id: string;
-  gated: false | string;
   safetensors?: { total: number };
-  siblings: { rfilename: string; size?: number }[];
+  siblings: HfSibling[];
 }
 
 /** blobs=true is what puts `size` on each sibling; without it every file
@@ -34,7 +40,6 @@ export async function fetchModelInfo(repo: string): Promise<HfModelInfo> {
 
   return {
     id: raw.id,
-    gated: raw.gated ?? false,
     safetensors: raw.safetensors,
     siblings: raw.siblings,
   };

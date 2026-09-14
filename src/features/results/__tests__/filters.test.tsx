@@ -1,28 +1,16 @@
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import { evaluate, GB } from "../../../lib/compat";
+import { GB } from "../../../lib/compat";
 import { loadModels } from "../../../lib/data/load";
-import { scoreModels, type ScoredModel } from "../useVerdicts";
+import { scoreModels } from "../useVerdicts";
 import { applyFilters, matchesModel, sortModels, sortRows } from "../sort";
 import { ModelTable } from "../ModelTable";
-import { APPLE_HW, REFERENCE_HW, REFERENCE_SETTINGS, TINY_HW } from "./fixtures";
+import { REFERENCE_HW, REFERENCE_SETTINGS, TINY_HW, unevaluableRow } from "./fixtures";
 
 const hw = REFERENCE_HW;
 const settings = REFERENCE_SETTINGS;
 const rows = scoreModels(loadModels(), hw, settings);
-
-/**
- * A genuinely null-breakdown row, produced the same way evaluate() produces
- * one in the app: vLLM has no Metal backend, so the engine guard rejects
- * this model on Apple Silicon before any memory arithmetic runs at all.
- * Built via a real evaluate() call rather than a hand-written Verdict
- * literal, so this can't drift from what the engine actually returns.
- */
-const unevaluableRow: ScoredModel = {
-  model: loadModels()[0]!,
-  verdict: evaluate(loadModels()[0]!, APPLE_HW, { ...settings, engine: "vllm" }),
-};
 
 describe("applyFilters", () => {
   it("matches on display name, case-insensitively", () => {

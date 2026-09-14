@@ -1,3 +1,5 @@
+import type { Breakdown } from "../compat";
+
 const BYTES_PER_GB = 1_000_000_000;
 const BYTES_PER_MB = 1_000_000;
 
@@ -33,4 +35,22 @@ export function formatParams(params: { total: number; active: number | null }): 
 /** Just the total, for dense columns where the MoE split does not fit. */
 export function formatParamCount(total: number): string {
   return `${(total / BILLION).toFixed(1)}B`;
+}
+
+/**
+ * A verdict the engine never computed has no total to show. Both of these
+ * exist so that "no answer" renders as an em dash in exactly one place: the
+ * previous arrangement repeated the null check at every call site, where a
+ * new consumer could quietly reintroduce the all-zeroes-reads-as-"needs
+ * nothing" bug that making the breakdown nullable was meant to end.
+ */
+export function formatBreakdownGB(breakdown: Breakdown | null): string {
+  return breakdown === null ? "—" : formatGB(breakdown.totalBytes);
+}
+
+export function formatBreakdownPercent(
+  breakdown: Breakdown | null,
+  vramBytes: number,
+): string {
+  return breakdown === null ? "—" : formatPercent(breakdown.totalBytes, vramBytes);
 }

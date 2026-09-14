@@ -1,7 +1,7 @@
 import { Badge } from "../../components/ui/Badge";
 import { VerdictPill } from "../../components/ui/Pill";
 import { evaluate, type HardwareSpec, type ModelSpec, type Settings } from "../../lib/compat";
-import { formatGB, formatPercent } from "../../lib/ui/format";
+import { formatBreakdownGB, formatBreakdownPercent } from "../../lib/ui/format";
 
 /**
  * One row per quantisation the model actually ships, each scored against the
@@ -47,8 +47,8 @@ export function QuantTable({
               <tr key={q.id}>
                 <th scope="row">{q.id}</th>
                 <td>{q.format}</td>
-                <td>{v.breakdown === null ? "—" : formatGB(v.breakdown.totalBytes)}</td>
-                <td>{v.breakdown === null ? "—" : formatPercent(v.breakdown.totalBytes, vramBytes)}</td>
+                <td>{formatBreakdownGB(v.breakdown)}</td>
+                <td>{formatBreakdownPercent(v.breakdown, vramBytes)}</td>
                 <td><Badge source={q.sizeSource} /></td>
                 <td><VerdictPill status={v.status} /></td>
                 <td>{v.notes[0] ?? ""}</td>
